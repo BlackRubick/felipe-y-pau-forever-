@@ -38,10 +38,10 @@ async function createAdmin() {
       [adminId, 'Admin User', 'admin@hotmail.com', hashedPassword, 'admin', 'Hospital Central']
     );
 
-    console.log('✅ Usuario admin creado exitosamente');
-    console.log('📧 Email: admin@hotmail.com');
-    console.log('🔐 Contraseña: admin123');
-    console.log('👤 ID: ' + adminId);
+    console.log(' Usuario admin creado exitosamente');
+    console.log(' Email: admin@hotmail.com');
+    console.log(' Contraseña: admin123');
+    console.log(' ID: ' + adminId);
     
     connection.end();
   } catch (error) {

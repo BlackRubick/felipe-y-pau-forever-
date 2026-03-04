@@ -2,7 +2,6 @@ import mysql from 'mysql2/promise';
 import bcryptjs from 'bcryptjs';
 import { User, Test, TestReading, Alert } from './types';
 
-// Pool de conexiones a MySQL
 let pool: mysql.Pool;
 
 export async function initializeDatabase() {
@@ -25,7 +24,6 @@ async function createTables() {
   const connection = await pool.getConnection();
 
   try {
-    // Tabla de usuarios
     await connection.execute(`
       CREATE TABLE IF NOT EXISTS users (
         id VARCHAR(36) PRIMARY KEY,
@@ -38,7 +36,7 @@ async function createTables() {
       )
     `);
 
-    // Tabla de pruebas (tests)
+
     await connection.execute(`
       CREATE TABLE IF NOT EXISTS tests (
         id VARCHAR(36) PRIMARY KEY,
@@ -69,7 +67,7 @@ async function createTables() {
       )
     `);
 
-    // Tabla de lecturas (readings)
+
     await connection.execute(`
       CREATE TABLE IF NOT EXISTS test_readings (
         id VARCHAR(36) PRIMARY KEY,
@@ -85,7 +83,7 @@ async function createTables() {
       )
     `);
 
-    // Tabla de alertas
+
     await connection.execute(`
       CREATE TABLE IF NOT EXISTS alerts (
         id VARCHAR(36) PRIMARY KEY,
@@ -111,7 +109,6 @@ async function initializeDefaultUsers() {
   const connection = await pool.getConnection();
 
   try {
-    // Verificar si existen usuarios
     const [users] = await connection.execute('SELECT COUNT(*) as count FROM users');
     
     if ((users as any)[0].count === 0) {
@@ -157,7 +154,6 @@ async function initializeDefaultUsers() {
 }
 
 export class Database {
-  // Usuario métodos
   async getUserByEmail(email: string): Promise<User | undefined> {
     const connection = await pool.getConnection();
     try {
@@ -207,7 +203,6 @@ export class Database {
     }
   }
 
-  // Test métodos
   async createTest(test: Test): Promise<Test> {
     const connection = await pool.getConnection();
     try {
@@ -245,7 +240,6 @@ export class Database {
 
       const test = this.mapRowToTest(rows[0]);
 
-      // Obtener lecturas y alertas
       const [readings]: any = await connection.execute(
         'SELECT * FROM test_readings WHERE testId = ? ORDER BY tiempo ASC',
         [id]
@@ -403,7 +397,6 @@ export class Database {
     }
   }
 
-  // Helper methods
   private mapRowToUser(row: any): User {
     return {
       id: row.id,
@@ -448,5 +441,4 @@ export class Database {
   }
 }
 
-// Instancia singleton
 export const db = new Database();

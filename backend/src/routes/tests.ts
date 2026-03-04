@@ -6,10 +6,6 @@ import { Test, TestReading, Alert, CreateTestRequest } from '../types';
 
 const router = express.Router();
 
-/**
- * POST /tests
- * Crear una nueva prueba
- */
 router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const {
@@ -51,10 +47,6 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
   }
 });
 
-/**
- * GET /tests
- * Obtener todas las pruebas del doctor actual
- */
 router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const allTests = await db.getAllTests();
@@ -64,10 +56,6 @@ router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
   }
 });
 
-/**
- * GET /tests/:id
- * Obtener una prueba por ID
- */
 router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const test = await db.getTestById(req.params.id);
@@ -81,10 +69,6 @@ router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
   }
 });
 
-/**
- * POST /tests/:id/readings
- * Agregar una lectura a la prueba
- */
 router.post('/:id/readings', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const { frecuenciaCardiaca, spo2, pasos, distancia, tiempo } = req.body;
@@ -105,10 +89,6 @@ router.post('/:id/readings', authMiddleware, async (req: AuthRequest, res: Respo
   }
 });
 
-/**
- * POST /tests/:id/alerts
- * Agregar una alerta a la prueba
- */
 router.post('/:id/alerts', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const { tipo, severidad, valor, mensaje } = req.body;
@@ -129,10 +109,6 @@ router.post('/:id/alerts', authMiddleware, async (req: AuthRequest, res: Respons
   }
 });
 
-/**
- * PUT /tests/:id
- * Actualizar una prueba
- */
 router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const { estado, duracion, distanciaTotal, fcPromedio, spo2Promedio, observaciones } =
@@ -158,10 +134,6 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
   }
 });
 
-/**
- * PUT /tests/:id/finalize
- * Finalizar una prueba
- */
 router.put('/:id/finalize', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const test = await db.getTestById(req.params.id);
@@ -170,7 +142,6 @@ router.put('/:id/finalize', authMiddleware, async (req: AuthRequest, res: Respon
       return;
     }
 
-    // Calcular promedios si hay lecturas
     if (test.lecturas.length > 0) {
       const fcSum = test.lecturas.reduce((sum, l) => sum + l.frecuenciaCardiaca, 0);
       const spo2Sum = test.lecturas.reduce((sum, l) => sum + l.spo2, 0);
@@ -192,10 +163,6 @@ router.put('/:id/finalize', authMiddleware, async (req: AuthRequest, res: Respon
   }
 });
 
-/**
- * DELETE /tests/:id
- * Cancelar una prueba
- */
 router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const updated = await db.updateTest(req.params.id, { estado: 'cancelada' });

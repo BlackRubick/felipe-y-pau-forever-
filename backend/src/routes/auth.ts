@@ -11,28 +11,21 @@ const router = express.Router();
 const getJwtSecret = () => process.env.JWT_SECRET || 'secret';
 const getJwtRefreshSecret = () => process.env.JWT_REFRESH_SECRET || 'refresh_secret';
 
-/**
- * POST /auth/register
- * Registrar un nuevo usuario
- */
 router.post('/register', async (req, res: Response) => {
   try {
     const { nombre, email, password, rol, institucion } = req.body as RegisterRequest;
 
-    // Validar campos
     if (!nombre || !email || !password) {
       res.status(400).json({ error: 'Missing required fields' });
       return;
     }
 
-    // Validar que email no exista
     const existingUser = await db.getUserByEmail(email);
     if (existingUser) {
       res.status(400).json({ error: 'Email already exists' });
       return;
     }
 
-    // Crear usuario
     const hashedPassword = bcryptjs.hashSync(password, 10);
     const newUser = await db.createUser({
       id: uuidv4(),
@@ -44,7 +37,6 @@ router.post('/register', async (req, res: Response) => {
       createdAt: new Date(),
     });
 
-    // Generar tokens
     const token = jwt.sign(
       { id: newUser.id, email: newUser.email, role: newUser.rol },
       getJwtSecret(),
@@ -71,10 +63,6 @@ router.post('/register', async (req, res: Response) => {
   }
 });
 
-/**
- * POST /auth/login
- * Iniciar sesión
- */
 router.post('/login', async (req, res: Response) => {
   try {
     const { email, password } = req.body as LoginRequest;
@@ -122,10 +110,6 @@ router.post('/login', async (req, res: Response) => {
   }
 });
 
-/**
- * POST /auth/refresh
- * Refrescar token
- */
 router.post('/refresh', async (req, res: Response) => {
   try {
     const { refreshToken } = req.body;
@@ -155,10 +139,6 @@ router.post('/refresh', async (req, res: Response) => {
   }
 });
 
-/**
- * GET /auth/me
- * Obtener perfil del usuario actual
- */
 router.get('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const user = await db.getUserById(req.userId!);
