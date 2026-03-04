@@ -1,14 +1,8 @@
-// ============================================================================
-// CUSTOM HOOKS
-// ============================================================================
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { TEST_DURATION_SECONDS, EXTENDED_DURATION_SECONDS } from '../constants';
 import { VitalReading } from '../types';
 
-/**
- * Hook para gestionar el cronómetro de la prueba
- */
 export const useTestTimer = (initialSeconds: number = 0) => {
   const [seconds, setSeconds] = useState(initialSeconds);
   const [isRunning, setIsRunning] = useState(false);
@@ -72,9 +66,6 @@ export const useTestTimer = (initialSeconds: number = 0) => {
   };
 };
 
-/**
- * Hook para validar datos con debounce
- */
 export const useValidation = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -114,9 +105,6 @@ export const useValidation = () => {
   };
 };
 
-/**
- * Hook para manejar formas (formularios)
- */
 export const useForm = <T extends Record<string, any>>(initialValues: T) => {
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -180,9 +168,6 @@ export const useForm = <T extends Record<string, any>>(initialValues: T) => {
   };
 };
 
-/**
- * Hook para usar datos locales (localStorage)
- */
 export const useLocalStorage = <T,>(key: string, initialValue: T) => {
   const [storedValue, setStoredValue] = useState<T>(() => {
     try {
@@ -218,9 +203,6 @@ export const useLocalStorage = <T,>(key: string, initialValue: T) => {
   return [storedValue, setValue, removeValue] as const;
 };
 
-/**
- * Hook para debounce de valores
- */
 export const useDebounce = <T,>(value: T, delayMs: number = 500) => {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
 
@@ -235,9 +217,6 @@ export const useDebounce = <T,>(value: T, delayMs: number = 500) => {
   return debouncedValue;
 };
 
-/**
- * Hook para detectar click fuera de un elemento
- */
 export const useClickOutside = (ref: React.RefObject<HTMLDivElement>, callback: () => void) => {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -251,9 +230,6 @@ export const useClickOutside = (ref: React.RefObject<HTMLDivElement>, callback: 
   }, [ref, callback]);
 };
 
-/**
- * Hook para manejar estado anterior
- */
 export const usePrevious = <T,>(value: T): T | undefined => {
   const ref = useRef<T>();
 
@@ -264,9 +240,6 @@ export const usePrevious = <T,>(value: T): T | undefined => {
   return ref.current;
 };
 
-/**
- * Hook para solicitudes HTTP con caché
- */
 export const useFetch = <T,>(url: string, options?: RequestInit) => {
   const [data, setData] = useState<T | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -275,7 +248,6 @@ export const useFetch = <T,>(url: string, options?: RequestInit) => {
 
   useEffect(() => {
     const fetchData = async () => {
-      // Verificar caché
       if (cacheRef.current.has(url)) {
         setData(cacheRef.current.get(url) || null);
         setIsLoading(false);

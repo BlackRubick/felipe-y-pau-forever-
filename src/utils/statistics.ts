@@ -1,6 +1,3 @@
-// ============================================================================
-// STATISTICS UTILITIES
-// ============================================================================
 
 import { VitalReading, TestStatistics, Alert, AlertSeverity } from '../types';
 
@@ -14,7 +11,6 @@ export const calculateStats = (readings: VitalReading[]): TestStatistics => {
   const distances = readings.map((r) => r.distancia);
   const steps = readings.map((r) => r.pasos);
 
-  // FC statistics
   const fcPromedio = fcs.reduce((a, b) => a + b) / fcs.length;
   const fcMinimo = Math.min(...fcs);
   const fcMaximo = Math.max(...fcs);
@@ -22,32 +18,27 @@ export const calculateStats = (readings: VitalReading[]): TestStatistics => {
   const fcVariabilidad = calculateVariability(fcs);
   const fcEventosCriticos = readings.filter((r) => r.fc > 140).length;
 
-  // SpO2 statistics
   const spo2Promedio = spo2s.reduce((a, b) => a + b) / spo2s.length;
   const spo2Minimo = Math.min(...spo2s);
   const spo2Maximo = Math.max(...spo2s);
   const spo2Variabilidad = calculateVariability(spo2s);
   const spo2EventosCriticos = readings.filter((r) => r.spo2 < 90).length;
 
-  // Distance and movement
   const distanciaTotal = distances[distances.length - 1] || 0;
   const pasosTotal = steps[steps.length - 1] || 0;
   const duracionTotal = readings.length; // in seconds
   const velocidadPromedio = duracionTotal > 0 ? distanciaTotal / duracionTotal : 0;
   const caloriasEstimadas = 50; // Placeholder, calcular según datos reales
 
-  // Índice de actividad
   const activeReadings = readings.filter((r) => r.distancia > 0).length;
   const indiceActividad = Math.round((activeReadings / readings.length) * 100);
 
-  // Recuperación
   const firstHalf = readings.slice(0, Math.floor(readings.length / 2));
   const secondHalf = readings.slice(Math.floor(readings.length / 2));
   const fcFirstHalf = firstHalf.length > 0 ? firstHalf.reduce((a, b) => a + b.fc, 0) / firstHalf.length : 0;
   const fcSecondHalf = secondHalf.length > 0 ? secondHalf.reduce((a, b) => a + b.fc, 0) / secondHalf.length : 0;
   const fcRecuperacion = determineRecovery(fcFirstHalf, fcSecondHalf);
 
-  // Interpretación
   const resultado = determineResult(fcPromedio, spo2Promedio, fcEventosCriticos, spo2EventosCriticos);
   const spo2Estado = determineSpo2State(spo2Promedio, spo2Minimo);
   const recomendaciones = generateRecommendations(resultado, fcPromedio, spo2Promedio);

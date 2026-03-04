@@ -1,23 +1,15 @@
-// ============================================================================
-// CONSTANTS
-// ============================================================================
+export const TEST_DURATION_SECONDS = 360;
+export const EXTENDED_DURATION_SECONDS = 120;
 
-// Test duration
-export const TEST_DURATION_SECONDS = 360; // 6 minutes
-export const EXTENDED_DURATION_SECONDS = 120; // 2 minutes
-
-// FC Thresholds
 export const FC_NORMAL_MIN = 60;
 export const FC_NORMAL_MAX = 100;
 export const FC_ELEVATED = 120;
 export const FC_CRITICAL = 140;
 
-// SpO2 Thresholds
 export const SPO2_NORMAL_MIN = 95;
 export const SPO2_WARNING = 90;
 export const SPO2_CRITICAL = 85;
 
-// Colors
 export const COLORS = {
   primary: '#1e40af',
   secondary: '#059669',
@@ -32,7 +24,6 @@ export const COLORS = {
   textLight: '#64748b',
 };
 
-// Surgery Types Labels
 export const SURGERY_TYPE_LABELS: Record<string, string> = {
   asma: 'Asma',
   epoc: 'EPOC (Enfermedad Pulmonar Obstructiva Crónica)',
@@ -45,7 +36,6 @@ export const SURGERY_TYPE_LABELS: Record<string, string> = {
   otra: 'Otra Enfermedad Pulmonar',
 };
 
-// User Role Labels
 export const USER_ROLE_LABELS: Record<string, string> = {
   admin: 'Administrador',
   medico: 'Médico',
@@ -53,7 +43,6 @@ export const USER_ROLE_LABELS: Record<string, string> = {
   paciente: 'Paciente',
 };
 
-// Test Status Labels
 export const TEST_STATUS_LABELS: Record<string, string> = {
   pendiente: 'Pendiente',
   en_progreso: 'En Progreso',
@@ -62,11 +51,9 @@ export const TEST_STATUS_LABELS: Record<string, string> = {
   cancelada: 'Cancelada',
 };
 
-// Pagination
 export const ITEMS_PER_PAGE = 10;
 export const ITEMS_PER_PAGE_OPTIONS = [5, 10, 25, 50];
 
-// Alert Messages
 export const ALERT_MESSAGES = {
   fc_muy_alta: 'Frecuencia cardíaca muy elevada',
   fc_elevada: 'Frecuencia cardíaca elevada',
@@ -78,9 +65,7 @@ export const ALERT_MESSAGES = {
   caida_abrupta: 'Caída abrupta de valores',
 };
 
-// API Endpoints
 export const API_ENDPOINTS = {
-  // Auth
   LOGIN: '/auth/login',
   REGISTER: '/auth/register',
   LOGOUT: '/auth/logout',
@@ -88,7 +73,6 @@ export const API_ENDPOINTS = {
   FORGOT_PASSWORD: '/auth/forgot-password',
   RESET_PASSWORD: '/auth/reset-password',
 
-  // Tests
   TESTS: '/tests',
   TEST_DETAIL: '/tests/:id',
   TEST_READINGS: '/tests/:id/readings',
@@ -98,17 +82,14 @@ export const API_ENDPOINTS = {
   TEST_RESUME: '/tests/:id/resume',
   TEST_CANCEL: '/tests/:id/cancel',
 
-  // Reports
   REPORT_PDF: '/tests/:id/report/pdf',
   REPORT_CSV: '/tests/:id/report/csv',
 
-  // Users
   PROFILE: '/users/profile',
   UPDATE_PROFILE: '/users/profile',
   CHANGE_PASSWORD: '/users/change-password',
 };
 
-// WebSocket Events
 export const WS_EVENTS = {
   READING: 'reading',
   STATUS: 'status',
@@ -117,7 +98,6 @@ export const WS_EVENTS = {
   PONG: 'pong',
 };
 
-// Demo Data
 export const DEMO_PATIENT = {
   nombreCompleto: 'Juan Pérez García',
   edad: 45,
@@ -128,7 +108,6 @@ export const DEMO_PATIENT = {
   observacionesPrevias: 'Paciente en buen estado general, EPOC leve',
 };
 
-// Feature Flags
 export const FEATURES = {
   DEMO_MODE: true,
   EXPORT_PDF: true,
@@ -138,7 +117,6 @@ export const FEATURES = {
   SYNC_CLOUD: false,
 };
 
-// Timeouts & Intervals
 export const TIMEOUTS = {
   TOAST_DURATION: 4000,
   MODAL_ANIMATION: 300,
@@ -149,7 +127,6 @@ export const TIMEOUTS = {
   WS_HEARTBEAT_INTERVAL: 30000,
 };
 
-// Breakpoints
 export const BREAKPOINTS = {
   XS: 320,
   SM: 640,
@@ -159,7 +136,6 @@ export const BREAKPOINTS = {
   XXL: 1536,
 };
 
-// Z-Index
 export const Z_INDEX = {
   BASE: 0,
   DROPDOWN: 10,

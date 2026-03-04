@@ -1,6 +1,3 @@
-// ============================================================================
-// LOGIN PAGE
-// ============================================================================
 
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
@@ -28,7 +25,6 @@ export const LoginPage: React.FC = () => {
     e.preventDefault();
     setLocalError(null);
 
-    // Validar
     if (!values.email || !validateEmail(values.email)) {
       setLocalError('Por favor ingresa un email válido');
       return;
@@ -53,7 +49,7 @@ export const LoginPage: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <div className="space-y-6">
-          {/* Header */}
+          
           <div className="text-center">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               Monitor Clínico 6MWT
@@ -61,14 +57,14 @@ export const LoginPage: React.FC = () => {
             <p className="text-gray-600">Prueba de Caminata de 6 Minutos</p>
           </div>
 
-          {/* Error Message */}
+          
           {localError && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
               {localError}
             </div>
           )}
 
-          {/* Form */}
+          
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
               label="Email"
@@ -113,7 +109,7 @@ export const LoginPage: React.FC = () => {
             </Button>
           </form>
 
-          {/* Links */}
+          
           <div className="space-y-2 text-center text-sm">
             <p>
               <Link to="/forgot-password" className="text-blue-600 hover:underline">

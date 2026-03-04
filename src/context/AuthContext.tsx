@@ -1,7 +1,3 @@
-// ============================================================================
-// AUTH CONTEXT - Manejo de autenticación global
-// ============================================================================
-
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { User, AuthResponse, LoginFormData, RegisterFormData } from '../types';
 import authService from '../services/authService';
@@ -25,7 +21,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Verificar autenticación al montar
   useEffect(() => {
     if (authService.isAuthenticated() && !user) {
       const currentUser = authService.getCurrentUser();
@@ -99,9 +94,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-/**
- * Hook para usar el contexto de autenticación
- */
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (context === undefined) {

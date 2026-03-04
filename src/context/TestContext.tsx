@@ -1,6 +1,3 @@
-// ============================================================================
-// TEST CONTEXT - Manejo de pruebas y monitoreo
-// ============================================================================
 
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { Test, TestConfig, VitalReading, Alert, TestStatus } from '../types';
@@ -13,7 +10,6 @@ interface TestContextType {
   readings: VitalReading[];
   alerts: Alert[];
 
-  // Acciones
   createTest: (config: TestConfig) => Promise<Test>;
   loadTest: (testId: string) => Promise<void>;
   updateCurrentTest: (data: Partial<Test>) => void;
@@ -180,9 +176,6 @@ export const TestProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return <TestContext.Provider value={value}>{children}</TestContext.Provider>;
 };
 
-/**
- * Hook para usar el contexto de pruebas
- */
 export const useTest = (): TestContextType => {
   const context = useContext(TestContext);
   if (context === undefined) {

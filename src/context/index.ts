@@ -1,6 +1,3 @@
-// ============================================================================
-// CONTEXT EXPORTS
-// ============================================================================
 
 export { AuthProvider, useAuth } from './AuthContext';
 export { TestProvider, useTest } from './TestContext';

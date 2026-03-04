@@ -1,7 +1,3 @@
-// ============================================================================
-// NUEVA PRUEBA PAGE - Panel de inicio para crear una nueva prueba
-// ============================================================================
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
@@ -37,19 +33,16 @@ export const NewTestPage: React.FC = () => {
       observacionesPrevias: '',
     });
 
-  // Validar edad
   const ageError =
     touched.edad && values.edad && !validateAge(values.edad)
       ? 'Edad debe estar entre 1 y 120'
       : '';
 
-  // Validar altura
   const heightError =
     touched.altura && values.altura && !validateHeight(values.altura)
       ? 'Altura debe estar entre 50 y 250 cm'
       : '';
 
-  // Validar fecha
   const dateError =
     touched.fechaOperacion &&
     values.fechaOperacion &&
@@ -59,13 +52,9 @@ export const NewTestPage: React.FC = () => {
 
   const daysPostOp = calculateDaysPostOp(values.fechaOperacion);
 
-  /**
-   * Iniciar prueba con paciente real
-   */
   const handleStartTest = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validaciones
     if (!values.nombreCompleto) {
       Swal.fire({
         icon: 'warning',
@@ -153,7 +142,7 @@ export const NewTestPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
       <div className="max-w-6xl mx-auto">
-        {/* Header */}
+        
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Nueva Prueba 6MWT</h1>
           <p className="text-gray-600">
@@ -161,9 +150,9 @@ export const NewTestPage: React.FC = () => {
           </p>
         </div>
 
-        {/* Content */}
+        
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Form */}
+          
           <div className="lg:col-span-2">
             <Card>
               <form onSubmit={handleStartTest} className="space-y-6">
@@ -346,9 +335,9 @@ export const NewTestPage: React.FC = () => {
             </Card>
           </div>
 
-          {/* Sidebar Info */}
+          
           <div className="space-y-6">
-            {/* Quick Info Card */}
+            
             <Card>
               <div className="space-y-4">
                 <h3 className="font-bold text-gray-900">Información Útil</h3>
@@ -381,7 +370,7 @@ export const NewTestPage: React.FC = () => {
               </div>
             </Card>
 
-            {/* Requirements Card */}
+            
             <Card>
               <div className="space-y-3">
                 <h3 className="font-bold text-gray-900">Requisitos</h3>

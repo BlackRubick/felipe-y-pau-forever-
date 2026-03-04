@@ -1,7 +1,3 @@
-// ============================================================================
-// DISPOSITIVO PAGE - Gestión y configuración del dispositivo
-// ============================================================================
-
 import React, { useState } from 'react';
 import Swal from 'sweetalert2';
 import { Card, Button, Input } from '../components/common';
@@ -32,7 +28,6 @@ export const DispositivoPage: React.FC = () => {
 
     setIsConnecting(true);
     try {
-      // Simulación de conexión
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       setDevice({
@@ -139,7 +134,7 @@ export const DispositivoPage: React.FC = () => {
       <div className="max-w-2xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Gestión de Dispositivo</h1>
 
-        {/* Connection Status Card */}
+        
         <Card className="mb-6">
           <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-6 rounded-lg mb-4">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Estado de Conexión</h2>
@@ -195,7 +190,7 @@ export const DispositivoPage: React.FC = () => {
           </div>
         </Card>
 
-        {/* Connection Settings */}
+        
         <Card className="mb-6">
           <h2 className="text-xl font-bold text-gray-900 mb-6">Configuración de Conexión</h2>
 
@@ -233,7 +228,7 @@ export const DispositivoPage: React.FC = () => {
           </div>
         </Card>
 
-        {/* Device Actions */}
+        
         {device.isConnected && (
           <Card>
             <h2 className="text-xl font-bold text-gray-900 mb-6">Acciones del Dispositivo</h2>

@@ -1,7 +1,3 @@
-// ============================================================================
-// AUTH TYPES
-// ============================================================================
-
 export interface User {
   id: string;
   email: string;
@@ -31,15 +27,11 @@ export interface AuthResponse {
   refreshToken: string;
 }
 
-// ============================================================================
-// PATIENT TYPES
-// ============================================================================
-
 export interface Patient {
   id: string;
   nombreCompleto: string;
   edad: number;
-  altura: number; // en cm
+  altura: number;
   sexo: 'M' | 'F' | 'O';
   nroHistoriaClinica: string;
   institucion: string;
@@ -60,12 +52,7 @@ export enum TipoEnfermedadPulmonar {
   OTRA = 'otra',
 }
 
-// Mantener alias para compatibilidad hacia atrás
 export type TipoCirugia = TipoEnfermedadPulmonar;
-
-// ============================================================================
-// TEST (6MWT) TYPES
-// ============================================================================
 
 export enum TestStatus {
   PENDIENTE = 'pendiente',
@@ -85,8 +72,8 @@ export interface TestConfig {
   raza?: string;
   sexo: 'M' | 'F' | 'O';
   tipoCirugia: TipoCirugia;
-  fechaOperacion: string; // ISO date
-  fechaCaminata?: string; // ISO date
+  fechaOperacion: string;
+  fechaCaminata?: string;
   numeroCaminata?: number;
   presionSanguineaInicial?: string;
   oxigenoSupplementario?: boolean;
@@ -97,12 +84,12 @@ export interface TestConfig {
 export interface VitalReading {
   id: string;
   testId: string;
-  fc: number; // Frecuencia cardíaca en BPM
-  spo2: number; // Saturación de oxígeno en %
+  fc: number;
+  spo2: number;
   pasos: number;
-  distancia: number; // en metros
-  timestamp: number; // ms desde inicio de prueba
-  receivedAt: string; // ISO datetime cuando se recibió
+  distancia: number;
+  timestamp: number;
+  receivedAt: string;
 }
 
 export interface Test {
@@ -110,26 +97,25 @@ export interface Test {
   pacienteId: string;
   testConfig: TestConfig;
   status: TestStatus;
-  startTime: string; // ISO datetime
-  endTime?: string; // ISO datetime
-  duration: number; // en segundos
+  startTime: string;
+  endTime?: string;
+  duration: number;
   readings: VitalReading[];
   alerts: Alert[];
   observacionesClínicas?: string;
-  createdBy: string; // user ID
+  createdBy: string;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface TestStatistics {
-  duracionTotal: number; // segundos
+  duracionTotal: number;
   pasosTotal: number;
-  distanciaTotal: number; // metros
-  velocidadPromedio: number; // m/s
+  distanciaTotal: number;
+  velocidadPromedio: number;
   caloriasEstimadas: number;
-  indiceActividad: number; // %
+  indiceActividad: number;
 
-  // FC
   fcPromedio: number;
   fcMinimo: number;
   fcMaximo: number;
@@ -138,7 +124,6 @@ export interface TestStatistics {
   fcEventosCriticos: number;
   fcRecuperacion: 'buena' | 'normal' | 'lenta' | 'critica';
 
-  // SpO2
   spo2Promedio: number;
   spo2Minimo: number;
   spo2Maximo: number;
@@ -146,14 +131,10 @@ export interface TestStatistics {
   spo2EventosCriticos: number;
   spo2Estado: 'optimo' | 'normal' | 'bajo' | 'critico';
 
-  // Interpretación
   resultado: 'normal' | 'anormal' | 'critico';
   recomendaciones: string[];
 }
 
-// ============================================================================
-// ALERT TYPES
-// ============================================================================
 
 export enum AlertType {
   FC_MUY_ALTA = 'fc_muy_alta',
@@ -179,27 +160,21 @@ export interface Alert {
   severity: AlertSeverity;
   message: string;
   value?: number;
-  timestamp: number; // ms desde inicio
+  timestamp: number;
   dismissedAt?: string;
   dismissedBy?: string;
 }
 
-// ============================================================================
-// DEVICE TYPES
-// ============================================================================
 
 export interface DeviceConnection {
   isConnected: boolean;
   ip: string;
-  latency: number; // ms
-  lastMessage: string; // ISO datetime
-  signalQuality: number; // 0-100
+  latency: number;
+  lastMessage: string;
+  signalQuality: number;
   status: 'conectado' | 'desconectado' | 'buscando';
 }
 
-// ============================================================================
-// REPORT TYPES
-// ============================================================================
 
 export interface TestReport {
   test: Test;
@@ -209,9 +184,6 @@ export interface TestReport {
   fechaGeneracion: string;
 }
 
-// ============================================================================
-// EVENT LOG TYPES
-// ============================================================================
 
 export enum EventType {
   PRUEBA_INICIADA = 'prueba_iniciada',
@@ -231,14 +203,10 @@ export interface EventLog {
   testId: string;
   type: EventType;
   message: string;
-  timestamp: number; // ms desde inicio
+  timestamp: number;
   createdAt: string;
   metadata?: Record<string, any>;
 }
-
-// ============================================================================
-// PAGINATION & FILTERING
-// ============================================================================
 
 export interface PaginationParams {
   page: number;
@@ -264,9 +232,6 @@ export interface PaginatedResponse<T> {
   totalPages: number;
 }
 
-// ============================================================================
-// API RESPONSE TYPES
-// ============================================================================
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -281,9 +246,6 @@ export interface ApiError {
   details?: Record<string, any>;
 }
 
-// ============================================================================
-// WEBSOCKET MESSAGE TYPES
-// ============================================================================
 
 export interface WebSocketMessage {
   type: 'reading' | 'status' | 'error' | 'ping' | 'pong';
@@ -309,9 +271,6 @@ export interface StatusMessage extends WebSocketMessage {
   };
 }
 
-// ============================================================================
-// FORM TYPES
-// ============================================================================
 
 export interface LoginFormData {
   email: string;
@@ -350,9 +309,6 @@ export interface TestObservationsData {
   observacionesClínicas: string;
 }
 
-// ============================================================================
-// NOTIFICATION TYPES
-// ============================================================================
 
 export enum NotificationType {
   SUCCESS = 'success',
@@ -366,7 +322,7 @@ export interface Notification {
   type: NotificationType;
   title?: string;
   message: string;
-  duration?: number; // ms, 0 = persistent
+  duration?: number;
   action?: {
     label: string;
     onClick: () => void;

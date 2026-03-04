@@ -1,7 +1,3 @@
-// ============================================================================
-// API SERVICE - Gestión de llamadas HTTP
-// ============================================================================
-
 import authService from './authService';
 import { ApiResponse, ApiError } from '../types';
 
@@ -10,37 +6,22 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api
 class ApiService {
   private isRefreshing = false;
 
-  /**
-   * Realizar petición GET
-   */
   async get<T>(endpoint: string): Promise<T> {
     return this.request<T>(endpoint, 'GET');
   }
 
-  /**
-   * Realizar petición POST
-   */
   async post<T>(endpoint: string, data: any): Promise<T> {
     return this.request<T>(endpoint, 'POST', data);
   }
 
-  /**
-   * Realizar petición PUT
-   */
   async put<T>(endpoint: string, data: any): Promise<T> {
     return this.request<T>(endpoint, 'PUT', data);
   }
 
-  /**
-   * Realizar petición DELETE
-   */
   async delete<T>(endpoint: string): Promise<T> {
     return this.request<T>(endpoint, 'DELETE');
   }
 
-  /**
-   * Petición genérica
-   */
   private async request<T>(
     endpoint: string,
     method: 'GET' | 'POST' | 'PUT' | 'DELETE',
@@ -66,7 +47,6 @@ class ApiService {
     try {
       const response = await fetch(url, config);
 
-      // Si token expirado, intentar renovar (solo una vez)
       if (response.status === 401 && retry && !this.isRefreshing) {
         console.log('🔄 Token expirado, intentando renovar...');
         this.isRefreshing = true;
@@ -75,7 +55,6 @@ class ApiService {
           await authService.refreshAccessToken();
           this.isRefreshing = false;
           console.log('✅ Token renovado exitosamente');
-          // Reintentar con token nuevo (retry = false para evitar bucle)
           return this.request<T>(endpoint, method, data, false);
         } catch (refreshError) {
           this.isRefreshing = false;
@@ -93,7 +72,6 @@ class ApiService {
 
       const result = await response.json();
 
-      // El backend puede devolver directamente el objeto o en formato { success, data }
       if (result && typeof result === 'object' && 'success' in result) {
         const apiResponse = result as ApiResponse<T>;
         if (!apiResponse.success) {
@@ -102,7 +80,6 @@ class ApiService {
         return apiResponse.data as T;
       }
 
-      // Si no tiene el formato ApiResponse, devolver directamente
       return result as T;
     } catch (error) {
       console.error('API Error:', error);
@@ -110,9 +87,6 @@ class ApiService {
     }
   }
 
-  /**
-   * Manejar errores de API
-   */
   private handleError(error: any): Error {
     if (error instanceof Error) return error;
 

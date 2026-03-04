@@ -91,11 +91,11 @@ export const HistorialPage: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Content */}
+        
         <div className="lg:col-span-2">
           <Card>
             <div className="space-y-6">
-              {/* Búsqueda */}
+              
               <div>
                 <input
                   type="text"
@@ -106,7 +106,7 @@ export const HistorialPage: React.FC = () => {
                 />
               </div>
 
-              {/* Tabla */}
+              
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="bg-gray-100 border-b">
@@ -157,7 +157,7 @@ export const HistorialPage: React.FC = () => {
           </Card>
         </div>
 
-        {/* Sidebar - Detalle */}
+        
         <div>
           {selectedTest ? (
             <Card>

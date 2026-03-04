@@ -1,7 +1,3 @@
-// ============================================================================
-// WEBSOCKET SERVICE - Conexión en tiempo real con dispositivo
-// ============================================================================
-
 import { VitalReading, WebSocketMessage, VitalReadingMessage } from '../types';
 
 export type WebSocketEventHandler = (data: any) => void;
@@ -21,9 +17,6 @@ class WebSocketService {
   private latency = 0;
   private lastMessageTime = 0;
 
-  /**
-   * Conectar a WebSocket
-   */
   connect(ip: string, port: number = 8080): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
@@ -60,9 +53,6 @@ class WebSocketService {
     });
   }
 
-  /**
-   * Desconectar WebSocket
-   */
   disconnect(): void {
     this.stopHeartbeat();
     if (this.ws) {
@@ -73,30 +63,18 @@ class WebSocketService {
     this.notifyStatusChange(false);
   }
 
-  /**
-   * Verificar si está conectado
-   */
   isConnected(): boolean {
     return this.ws !== null && this.ws.readyState === WebSocket.OPEN;
   }
 
-  /**
-   * Obtener latencia actual
-   */
   getLatency(): number {
     return this.latency;
   }
 
-  /**
-   * Obtener tiempo desde último mensaje
-   */
   getTimeSinceLastMessage(): number {
     return Date.now() - this.lastMessageTime;
   }
 
-  /**
-   * Escuchar eventos
-   */
   on(eventType: string, handler: WebSocketEventHandler): void {
     if (!this.messageHandlers.has(eventType)) {
       this.messageHandlers.set(eventType, new Set());
@@ -104,9 +82,6 @@ class WebSocketService {
     this.messageHandlers.get(eventType)!.add(handler);
   }
 
-  /**
-   * Dejar de escuchar eventos
-   */
   off(eventType: string, handler: WebSocketEventHandler): void {
     const handlers = this.messageHandlers.get(eventType);
     if (handlers) {
@@ -114,30 +89,18 @@ class WebSocketService {
     }
   }
 
-  /**
-   * Escuchar cambios de estado
-   */
   onStatusChange(handler: WebSocketStatusHandler): void {
     this.statusHandlers.add(handler);
   }
 
-  /**
-   * Dejar de escuchar cambios de estado
-   */
   offStatusChange(handler: WebSocketStatusHandler): void {
     this.statusHandlers.delete(handler);
   }
 
-  /**
-   * Escuchar errores
-   */
   onError(handler: WebSocketErrorHandler): void {
     this.errorHandlers.add(handler);
   }
 
-  /**
-   * Enviar mensaje
-   */
   send(message: WebSocketMessage): void {
     if (!this.isConnected()) {
       throw new Error('WebSocket no conectado');
@@ -145,28 +108,22 @@ class WebSocketService {
     this.ws!.send(JSON.stringify(message));
   }
 
-  /**
-   * Métodos privados
-   */
 
   private handleMessage(data: string): void {
     try {
       this.lastMessageTime = Date.now();
       const message: WebSocketMessage = JSON.parse(data);
 
-      // Calcular latencia si es respuesta a ping
       if (message.type === 'pong') {
         const timestamp = parseInt(message.payload.timestamp || '0');
         this.latency = Date.now() - timestamp;
       }
 
-      // Emitir evento específico
       const handlers = this.messageHandlers.get(message.type);
       if (handlers) {
         handlers.forEach((handler) => handler(message.payload));
       }
 
-      // Emitir evento genérico
       const allHandlers = this.messageHandlers.get('*');
       if (allHandlers) {
         allHandlers.forEach((handler) => handler(message));
@@ -204,7 +161,6 @@ class WebSocketService {
 
       setTimeout(() => {
         this.connect(this.url.replace('ws://', '').split(':')[0]).catch(() => {
-          // Error ya manejado en connect()
         });
       }, this.reconnectDelay * this.reconnectAttempts);
     }

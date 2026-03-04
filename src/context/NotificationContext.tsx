@@ -1,7 +1,3 @@
-// ============================================================================
-// NOTIFICATION CONTEXT - Notificaciones y alertas globales
-// ============================================================================
-
 import React, { createContext, useContext, useCallback, useState } from 'react';
 import { Notification, NotificationType } from '../types';
 
@@ -35,7 +31,6 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
 
     setNotifications((prev) => [...prev, fullNotification]);
 
-    // Auto-remove si tiene duración
     if (fullNotification.duration && fullNotification.duration > 0) {
       setTimeout(() => {
         removeNotification(id);
@@ -113,9 +108,6 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 };
 
-/**
- * Hook para usar el contexto de notificaciones
- */
 export const useNotification = (): NotificationContextType => {
   const context = useContext(NotificationContext);
   if (context === undefined) {

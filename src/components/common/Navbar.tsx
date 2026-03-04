@@ -26,12 +26,12 @@ export const Navbar: React.FC = () => {
     <nav className="bg-white shadow-md sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Logo */}
+          
           <Link to="/nueva-prueba" className="flex items-center gap-2">
             <h1 className="text-2xl font-bold text-blue-600">Monitor 6MWT</h1>
           </Link>
 
-          {/* Desktop Menu */}
+          
           <div className="hidden md:flex items-center gap-8">
             <Link
               to="/nueva-prueba"
@@ -71,7 +71,7 @@ export const Navbar: React.FC = () => {
             </Link>
           </div>
 
-          {/* User Section */}
+          
           <div className="flex items-center gap-4">
             <div className="hidden sm:flex items-center gap-2">
               <span className="text-sm text-gray-700">{user?.nombre}</span>
@@ -80,7 +80,7 @@ export const Navbar: React.FC = () => {
               </span>
             </div>
 
-            {/* Mobile Menu Button */}
+            
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="md:hidden p-2 rounded-lg text-gray-700 hover:bg-gray-100"
@@ -100,7 +100,7 @@ export const Navbar: React.FC = () => {
               </svg>
             </button>
 
-            {/* Logout Button */}
+            
             <button
               onClick={handleLogout}
               className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
@@ -110,7 +110,7 @@ export const Navbar: React.FC = () => {
           </div>
         </div>
 
-        {/* Mobile Menu */}
+        
         {isMenuOpen && (
           <div className="md:hidden pb-4 space-y-2 border-t pt-4">
             <Link

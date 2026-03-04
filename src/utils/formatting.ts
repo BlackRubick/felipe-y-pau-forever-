@@ -1,7 +1,3 @@
-// ============================================================================
-// FORMATTING & PARSING UTILITIES
-// ============================================================================
-
 export const formatTime = (seconds: number): string => {
   const minutes = Math.floor(seconds / 60);
   const secs = seconds % 60;
@@ -67,11 +63,9 @@ export const estimatedCalories = (
   ageYears: number,
   weightKg: number
 ): number => {
-  // Fórmula simplificada de calorías quemadas en caminata
   const durationMinutes = durationSeconds / 60;
   const speedKmH = (distanceMeters / 1000 / durationMinutes) * 60;
 
-  // Basado en fórmula de gasto energético
   const met = speedKmH < 3 ? 2.0 : speedKmH < 4 ? 2.8 : speedKmH < 5 ? 3.5 : 4.0;
   return (met * weightKg * durationMinutes) / 60;
 };

@@ -1,7 +1,3 @@
-// ============================================================================
-// COMMON COMPONENTS EXPORT
-// ============================================================================
-
 export { NotificationContainer } from './NotificationContainer';
 export { LoadingSpinner } from './LoadingSpinner';
 export { Button } from './Button';

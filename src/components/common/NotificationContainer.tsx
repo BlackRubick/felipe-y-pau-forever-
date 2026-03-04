@@ -1,7 +1,3 @@
-// ============================================================================
-// NOTIFICATION CONTAINER - Mostrar notificaciones globales
-// ============================================================================
-
 import React from 'react';
 import { useNotification } from '../../context/NotificationContext';
 import { NotificationType } from '../../types';

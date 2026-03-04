@@ -15,11 +15,11 @@ function App() {
               <div className="App min-h-screen bg-gray-50">
                 <Navbar />
                 <Routes>
-                  {/* Public Routes */}
+                  
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/register" element={<RegisterPage />} />
 
-                  {/* Protected Routes */}
+                  
                   <Route
                     path="/nueva-prueba"
                     element={
@@ -70,11 +70,11 @@ function App() {
                     }
                   />
 
-                  {/* Redirect */}
+                  
                   <Route path="/" element={<Navigate to="/login" replace />} />
                 </Routes>
 
-                {/* Global Notification Container */}
+                
                 <NotificationContainer />
               </div>
             </TestTabProvider>

@@ -132,7 +132,7 @@ export const ReportesPage: React.FC = () => {
         <p className="text-gray-600">Análisis detallado de la prueba de caminata de 6 minutos</p>
       </div>
 
-      {/* Resultado General */}
+      
       <Card className="mb-6">
         <div className="flex items-center justify-between">
           <div>
@@ -163,7 +163,7 @@ export const ReportesPage: React.FC = () => {
         </div>
       </Card>
 
-      {/* Tabs */}
+      
       <div className="flex gap-4 mb-6 border-b border-gray-300">
         <button
           onClick={() => setActiveTab('resumen')}
@@ -197,10 +197,10 @@ export const ReportesPage: React.FC = () => {
         </button>
       </div>
 
-      {/* Content */}
+      
       {activeTab === 'resumen' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Métricas Principales */}
+          
           <Card>
             <h3 className="text-xl font-bold text-gray-900 mb-6">Métricas Principales</h3>
             <div className="space-y-4">
@@ -223,7 +223,7 @@ export const ReportesPage: React.FC = () => {
             </div>
           </Card>
 
-          {/* Frecuencia Cardíaca */}
+          
           <Card>
             <h3 className="text-xl font-bold text-gray-900 mb-6">Frecuencia Cardíaca (BPM)</h3>
             <div className="space-y-4">
@@ -246,7 +246,7 @@ export const ReportesPage: React.FC = () => {
             </div>
           </Card>
 
-          {/* Saturación de Oxígeno */}
+          
           <Card>
             <h3 className="text-xl font-bold text-gray-900 mb-6">Saturación de Oxígeno (%)</h3>
             <div className="space-y-4">
@@ -271,7 +271,7 @@ export const ReportesPage: React.FC = () => {
             </div>
           </Card>
 
-          {/* Datos Basales */}
+          
           <Card>
             <h3 className="text-xl font-bold text-gray-900 mb-6">Datos Basales</h3>
             <div className="space-y-4">

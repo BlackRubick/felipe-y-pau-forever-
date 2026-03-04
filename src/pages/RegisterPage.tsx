@@ -1,6 +1,3 @@
-// ============================================================================
-// REGISTER PAGE
-// ============================================================================
 
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
@@ -35,7 +32,6 @@ export const RegisterPage: React.FC = () => {
     e.preventDefault();
     setLocalError(null);
 
-    // Validar
     if (!values.nombre || !values.apellido) {
       setLocalError('Por favor completa nombre y apellido');
       return;
@@ -75,7 +71,7 @@ export const RegisterPage: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4 py-8">
       <Card className="w-full max-w-md">
         <div className="space-y-6">
-          {/* Header */}
+          
           <div className="text-center">
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
               Crear Nueva Cuenta
@@ -85,14 +81,14 @@ export const RegisterPage: React.FC = () => {
             </p>
           </div>
 
-          {/* Error Message */}
+          
           {localError && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
               {localError}
             </div>
           )}
 
-          {/* Form */}
+          
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <Input
@@ -184,7 +180,7 @@ export const RegisterPage: React.FC = () => {
             </Button>
           </form>
 
-          {/* Login Link */}
+          
           <p className="text-center text-sm text-gray-600">
             ¿Ya tienes cuenta?{' '}
             <Link to="/login" className="text-blue-600 hover:underline font-semibold">

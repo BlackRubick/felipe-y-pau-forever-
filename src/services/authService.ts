@@ -1,12 +1,7 @@
-// ============================================================================
-// AUTH SERVICE - Gestión de autenticación y sesiones
-// ============================================================================
-
 import { User, AuthResponse, LoginFormData, RegisterFormData, UserRole } from '../types';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
-// Mock data for testing
 const MOCK_USERS: Record<string, { password: string; user: User }> = {
   'test@example.com': {
     password: 'password123',
@@ -51,12 +46,8 @@ class AuthService {
   private userKey = 'user_data';
   private useMockData = false; // Cambiar a false cuando tengas backend real
 
-  /**
-   * Registrar nuevo usuario
-   */
   async register(data: RegisterFormData): Promise<AuthResponse> {
     if (this.useMockData) {
-      // Mock: crear usuario de prueba
       await new Promise(resolve => setTimeout(resolve, 500)); // Simular delay
       
       const newUser: User = {
@@ -103,13 +94,9 @@ class AuthService {
     return result;
   }
 
-  /**
-   * Iniciar sesión
-   */
   async login(data: LoginFormData): Promise<AuthResponse> {
     if (this.useMockData) {
-      // Mock login
-      await new Promise(resolve => setTimeout(resolve, 500)); // Simular delay
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       const user = MOCK_USERS[data.email];
       
@@ -153,40 +140,25 @@ class AuthService {
     return result;
   }
 
-  /**
-   * Cerrar sesión
-   */
   logout(): void {
     localStorage.removeItem(this.tokenKey);
     localStorage.removeItem(this.refreshTokenKey);
     localStorage.removeItem(this.userKey);
   }
 
-  /**
-   * Obtener usuario actual
-   */
   getCurrentUser(): User | null {
     const user = localStorage.getItem(this.userKey);
     return user ? JSON.parse(user) : null;
   }
 
-  /**
-   * Verificar si hay sesión activa
-   */
   isAuthenticated(): boolean {
     return !!this.getToken();
   }
 
-  /**
-   * Obtener token de acceso
-   */
   getToken(): string | null {
     return localStorage.getItem(this.tokenKey);
   }
 
-  /**
-   * Obtener header de autorización
-   */
   getAuthHeader(): Record<string, string> {
     const token = this.getToken();
     if (!token) {
@@ -195,9 +167,6 @@ class AuthService {
     return token ? { Authorization: `Bearer ${token}` } : {};
   }
 
-  /**
-   * Renovar token
-   */
   async refreshAccessToken(): Promise<string> {
     const refreshToken = localStorage.getItem(this.refreshTokenKey);
 
@@ -222,9 +191,6 @@ class AuthService {
     return result.token;
   }
 
-  /**
-   * Solicitar recuperación de contraseña
-   */
   async requestPasswordReset(email: string): Promise<void> {
     const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
       method: 'POST',
@@ -238,9 +204,6 @@ class AuthService {
     }
   }
 
-  /**
-   * Cambiar contraseña
-   */
   async changePassword(token: string, newPassword: string): Promise<void> {
     const response = await fetch(`${API_BASE_URL}/auth/reset-password`, {
       method: 'POST',
@@ -254,9 +217,6 @@ class AuthService {
     }
   }
 
-  /**
-   * Métodos privados
-   */
   private setToken(token: string): void {
     localStorage.setItem(this.tokenKey, token);
   }

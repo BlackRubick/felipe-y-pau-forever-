@@ -1,7 +1,3 @@
-// ============================================================================
-// TEST SERVICE - Operaciones relacionadas con pruebas 6MWT
-// ============================================================================
-
 import apiService from './apiService';
 import {
   Test,
@@ -68,9 +64,6 @@ const mapBackendTestToFrontend = (backendTest: any): Test => {
 };
 
 class TestService {
-  /**
-   * Crear nueva prueba
-   */
   async createTest(config: TestConfig): Promise<Test> {
     const payload = {
       paciente: {
@@ -96,75 +89,45 @@ class TestService {
     return mapBackendTestToFrontend(backendTest);
   }
 
-  /**
-   * Obtener prueba por ID
-   */
   async getTest(testId: string): Promise<Test> {
     const backendTest = await apiService.get<any>(`/tests/${testId}`);
     return mapBackendTestToFrontend(backendTest);
   }
 
-  /**
-   * Obtener todas las pruebas
-   */
   async getAllTests(): Promise<Test[]> {
     const backendTests = await apiService.get<any[]>('/tests');
     return (backendTests || []).map(mapBackendTestToFrontend);
   }
 
-  /**
-   * Actualizar prueba
-   */
   async updateTest(testId: string, data: Partial<Test>): Promise<Test> {
     const backendTest = await apiService.put<any>(`/tests/${testId}`, data);
     return mapBackendTestToFrontend(backendTest);
   }
 
-  /**
-   * Finalizar prueba
-   */
   async finalizeTest(testId: string): Promise<Test> {
     return apiService.put<Test>(`/tests/${testId}/finalize`, {});
   }
 
-  /**
-   * Pausar prueba
-   */
   async pauseTest(testId: string): Promise<Test> {
     return apiService.put<Test>(`/tests/${testId}/pause`, {});
   }
 
-  /**
-   * Reanudar prueba
-   */
   async resumeTest(testId: string): Promise<Test> {
     return apiService.put<Test>(`/tests/${testId}/resume`, {});
   }
 
-  /**
-   * Cancelar prueba
-   */
   async cancelTest(testId: string): Promise<Test> {
     return apiService.put<Test>(`/tests/${testId}/cancel`, {});
   }
 
-  /**
-   * Agregar lectura vital
-   */
   async addReading(testId: string, reading: Omit<VitalReading, 'id' | 'testId' | 'receivedAt'>): Promise<VitalReading> {
     return apiService.post<VitalReading>(`/tests/${testId}/readings`, reading);
   }
 
-  /**
-   * Obtener estadísticas de prueba
-   */
   async getTestStatistics(testId: string): Promise<TestStatistics> {
     return apiService.get<TestStatistics>(`/tests/${testId}/statistics`);
   }
 
-  /**
-   * Listar pruebas con filtros
-   */
   async listTests(filters: TestFilterParams): Promise<PaginatedResponse<Test>> {
     const tests = await this.getAllTests();
 
@@ -194,23 +157,14 @@ class TestService {
     };
   }
 
-  /**
-   * Eliminar prueba
-   */
   async deleteTest(testId: string): Promise<void> {
     return apiService.delete<void>(`/tests/${testId}`);
   }
 
-  /**
-   * Actualizar observaciones
-   */
   async updateObservations(testId: string, observations: string): Promise<Test> {
     return apiService.put<Test>(`/tests/${testId}/observations`, { observacionesClínicas: observations });
   }
 
-  /**
-   * Generar reporte PDF
-   */
   async generatePDF(testId: string): Promise<Blob> {
     const response = await fetch(
       `${process.env.REACT_APP_API_URL || 'http://localhost:3001/api'}/tests/${testId}/report/pdf`,
@@ -229,9 +183,6 @@ class TestService {
     return response.blob();
   }
 
-  /**
-   * Generar reporte CSV
-   */
   async generateCSV(testId: string): Promise<Blob> {
     const response = await fetch(
       `${process.env.REACT_APP_API_URL || 'http://localhost:3001/api'}/tests/${testId}/report/csv`,
