@@ -37,14 +37,14 @@ const mapBackendTestToFrontend = (backendTest: any): Test => {
     startTime: fecha,
     endTime: undefined,
     duration: backendTest.duracion || 0,
-    readings: (backendTest.lecturas || []).map((reading: any) => ({
+    readings: (backendTest.lecturas || []).map((reading: any, index: number) => ({
       id: reading.id,
       testId: backendTest.id,
       fc: reading.frecuenciaCardiaca,
       spo2: reading.spo2,
       pasos: reading.pasos,
       distancia: reading.distancia,
-      timestamp: 0,
+      timestamp: typeof reading.tiempo === 'number' ? reading.tiempo : index,
       receivedAt: reading.timestamp ? new Date(reading.timestamp).toISOString() : new Date().toISOString(),
     })),
     alerts: (backendTest.alertas || []).map((alert: any) => ({

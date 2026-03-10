@@ -1,14 +1,17 @@
 import express from 'express';
+import http from 'http';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { initializeDatabase } from './database';
 import authRoutes from './routes/auth';
 import testRoutes from './routes/tests';
+import { initializeRealtimeServer } from './realtime';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const server = http.createServer(app);
 
 app.use(express.json());
 app.use(cors({
@@ -35,11 +38,13 @@ app.use((req, res) => {
 async function startServer() {
   try {
     await initializeDatabase();
+    initializeRealtimeServer(server);
     console.log('✅ Base de datos inicializada correctamente');
     
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {
       console.log(`\n🚀 API Server running at http://localhost:${PORT}`);
       console.log(`📝 CORS enabled for: ${process.env.CORS_ORIGIN || 'http://localhost:3000'}`);
+      console.log(`🔌 WebSocket: ws://localhost:${PORT}/ws/tests?testId=<id>`);
       console.log(`\n✅ Available endpoints:`);
       console.log(`   POST   /api/auth/register      - Register new user`);
       console.log(`   POST   /api/auth/login         - Login`);

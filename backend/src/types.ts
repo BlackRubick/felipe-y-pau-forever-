@@ -22,6 +22,7 @@ export interface Patient {
 export interface TestReading {
   id: string;
   timestamp: Date;
+  tiempo?: number;
   frecuenciaCardiaca: number;
   spo2: number;
   pasos: number;

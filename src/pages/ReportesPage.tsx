@@ -4,6 +4,101 @@ import { Card, Button } from '../components/common';
 import testService from '../services/testService';
 import { Test } from '../types';
 
+interface BackendRealtimeMessage {
+  type: 'subscribed' | 'reading' | 'alert' | 'error';
+  testId?: string;
+  payload?: any;
+  timestamp: string;
+}
+
+interface LineChartPoint {
+  x: number;
+  y: number;
+}
+
+const CHART_WINDOW_SIZE = 40;
+
+const getRealtimeWsUrl = (testId: string) => {
+  const apiBase = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+  const normalizedBase = apiBase.endsWith('/api') ? apiBase.slice(0, -4) : apiBase;
+  const wsBase = normalizedBase.replace(/^http/, 'ws');
+  return `${wsBase}/ws/tests?testId=${encodeURIComponent(testId)}`;
+};
+
+const MiniLineChart: React.FC<{
+  title: string;
+  colorClass: string;
+  stroke: string;
+  data: LineChartPoint[];
+  unit: string;
+}> = ({ title, colorClass, stroke, data, unit }) => {
+  const width = 900;
+  const height = 220;
+  const padding = 28;
+
+  if (!data.length) {
+    return (
+      <div className={`rounded-lg p-6 ${colorClass}`}>
+        <h3 className="text-xl font-bold text-gray-900 mb-3">{title}</h3>
+        <div className="h-48 bg-white rounded flex items-center justify-center text-gray-500">
+          Esperando lecturas...
+        </div>
+      </div>
+    );
+  }
+
+  const xMin = data[0].x;
+  const xMax = data[data.length - 1].x || xMin + 1;
+  const yVals = data.map((d) => d.y);
+  const yMinRaw = Math.min(...yVals);
+  const yMaxRaw = Math.max(...yVals);
+  const yPad = Math.max(2, (yMaxRaw - yMinRaw) * 0.1);
+  const yMin = yMinRaw - yPad;
+  const yMax = yMaxRaw + yPad;
+
+  const toSvgX = (x: number) => {
+    if (xMax === xMin) return width / 2;
+    return padding + ((x - xMin) / (xMax - xMin)) * (width - padding * 2);
+  };
+
+  const toSvgY = (y: number) => {
+    if (yMax === yMin) return height / 2;
+    return height - padding - ((y - yMin) / (yMax - yMin)) * (height - padding * 2);
+  };
+
+  const points = data.map((p) => `${toSvgX(p.x)},${toSvgY(p.y)}`).join(' ');
+  const last = data[data.length - 1];
+
+  return (
+    <div className={`rounded-lg p-6 ${colorClass}`}>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-xl font-bold text-gray-900">{title}</h3>
+        <span className="text-sm font-semibold text-gray-700">
+          Último: {last.y} {unit}
+        </span>
+      </div>
+
+      <div className="bg-white rounded p-2">
+        <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-48">
+          <line x1={padding} y1={padding} x2={padding} y2={height - padding} stroke="#cbd5e1" strokeWidth="1" />
+          <line
+            x1={padding}
+            y1={height - padding}
+            x2={width - padding}
+            y2={height - padding}
+            stroke="#cbd5e1"
+            strokeWidth="1"
+          />
+
+          <polyline fill="none" stroke={stroke} strokeWidth="3" points={points} strokeLinejoin="round" strokeLinecap="round" />
+
+          <circle cx={toSvgX(last.x)} cy={toSvgY(last.y)} r="4" fill={stroke} />
+        </svg>
+      </div>
+    </div>
+  );
+};
+
 interface ReportData {
   id: string;
   paciente: string;
@@ -79,11 +174,19 @@ const toReportData = (test: Test): ReportData => {
 
 export const ReportesPage: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState<'resumen' | 'graficos' | 'observaciones'>('resumen');
+  const [activeTab, setActiveTab] = useState<'resumen' | 'graficos' | 'observaciones'>(() => {
+    const tab = searchParams.get('tab');
+    return tab === 'graficos' || tab === 'observaciones' ? tab : 'resumen';
+  });
   const [currentTest, setCurrentTest] = useState<Test | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
+  const [isWsConnected, setIsWsConnected] = useState(false);
 
   useEffect(() => {
+    const tab = searchParams.get('tab');
+    setActiveTab(tab === 'graficos' || tab === 'observaciones' ? tab : 'resumen');
+
     const load = async () => {
       setIsLoading(true);
       try {
@@ -91,9 +194,11 @@ export const ReportesPage: React.FC = () => {
         if (testId) {
           const test = await testService.getTest(testId);
           setCurrentTest(test);
+          setLastRefresh(new Date());
         } else {
           const all = await testService.getAllTests();
           setCurrentTest(all[0] || null);
+          setLastRefresh(new Date());
         }
       } finally {
         setIsLoading(false);
@@ -102,7 +207,127 @@ export const ReportesPage: React.FC = () => {
     load();
   }, [searchParams]);
 
+  useEffect(() => {
+    if (activeTab !== 'graficos' || !currentTest?.id || isWsConnected) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const updated = await testService.getTest(currentTest.id);
+        setCurrentTest(updated);
+        setLastRefresh(new Date());
+      } catch {
+      }
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [activeTab, currentTest?.id, isWsConnected]);
+
+  useEffect(() => {
+    if (activeTab !== 'graficos' || !currentTest?.id) return;
+
+    const ws = new WebSocket(getRealtimeWsUrl(currentTest.id));
+
+    ws.onopen = () => {
+      setIsWsConnected(true);
+      setLastRefresh(new Date());
+    };
+
+    ws.onclose = () => {
+      setIsWsConnected(false);
+    };
+
+    ws.onerror = () => {
+      setIsWsConnected(false);
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data) as BackendRealtimeMessage;
+
+        if (message.type === 'reading' && message.payload) {
+          setCurrentTest((prev) => {
+            if (!prev || prev.id !== message.testId) return prev;
+
+            const incoming = message.payload;
+            const exists = prev.readings.some((r) => r.id === incoming.id);
+            if (exists) return prev;
+
+            return {
+              ...prev,
+              readings: [
+                ...prev.readings,
+                {
+                  id: incoming.id,
+                  testId: prev.id,
+                  fc: incoming.frecuenciaCardiaca,
+                  spo2: incoming.spo2,
+                  pasos: incoming.pasos,
+                  distancia: incoming.distancia,
+                  timestamp: typeof incoming.tiempo === 'number' ? incoming.tiempo : prev.readings.length,
+                  receivedAt: incoming.timestamp ? new Date(incoming.timestamp).toISOString() : new Date().toISOString(),
+                },
+              ],
+            };
+          });
+          setLastRefresh(new Date());
+        }
+
+        if (message.type === 'alert' && message.payload) {
+          setCurrentTest((prev) => {
+            if (!prev || prev.id !== message.testId) return prev;
+
+            const incoming = message.payload;
+            const exists = prev.alerts.some((a) => a.id === incoming.id);
+            if (exists) return prev;
+
+            return {
+              ...prev,
+              alerts: [
+                ...prev.alerts,
+                {
+                  id: incoming.id,
+                  testId: prev.id,
+                  type: incoming.tipo || 'caida_abrupta',
+                  severity: incoming.severidad || 'warning',
+                  message: incoming.mensaje || '',
+                  value: incoming.valor,
+                  timestamp: prev.readings.length,
+                },
+              ],
+            };
+          });
+          setLastRefresh(new Date());
+        }
+      } catch {
+      }
+    };
+
+    return () => {
+      ws.close();
+      setIsWsConnected(false);
+    };
+  }, [activeTab, currentTest?.id]);
+
   const report = useMemo(() => (currentTest ? toReportData(currentTest) : null), [currentTest]);
+
+  const chartSeries = useMemo(() => {
+    const readings = currentTest?.readings || [];
+    const series = readings.map((r, i) => ({
+      x: typeof r.timestamp === 'number' ? r.timestamp : i,
+      fc: r.fc || 0,
+      spo2: r.spo2 || 0,
+      distancia: r.distancia || 0,
+    }));
+
+    const visible = series.slice(-CHART_WINDOW_SIZE);
+
+    return {
+      fc: visible.map((p) => ({ x: p.x, y: p.fc })),
+      spo2: visible.map((p) => ({ x: p.x, y: p.spo2 })),
+      distancia: visible.map((p) => ({ x: p.x, y: p.distancia })),
+      totalPoints: series.length,
+    };
+  }, [currentTest]);
 
   if (isLoading) {
     return <div className="max-w-6xl mx-auto px-4 py-8 text-gray-600">Cargando reporte...</div>;
@@ -291,35 +516,41 @@ export const ReportesPage: React.FC = () => {
       {activeTab === 'graficos' && (
         <Card>
           <div className="space-y-8">
-            <div>
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Evolución de Frecuencia Cardíaca</h3>
-              <div className="bg-gray-100 rounded-lg p-8 text-center text-gray-600">
-                📈 Gráfico simulado - Frecuencia Cardíaca a lo largo del test
-                <div className="mt-4 h-40 bg-white rounded flex items-center justify-center">
-                  [Gráfico interactivo con Recharts]
-                </div>
-              </div>
+            <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <p className="text-sm font-medium text-blue-900">
+                {isWsConnected
+                  ? 'Tiempo real por WebSocket (sin polling)'
+                  : 'WebSocket no disponible. Usando polling de respaldo cada 2s'}
+              </p>
+              <p className="text-xs text-blue-700">
+                {lastRefresh ? `Última actualización: ${lastRefresh.toLocaleTimeString()}` : 'Sin actualizaciones'}
+                {' · '}Puntos: {chartSeries.totalPoints}
+              </p>
             </div>
 
-            <div>
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Evolución de SpO₂</h3>
-              <div className="bg-gray-100 rounded-lg p-8 text-center text-gray-600">
-                📉 Gráfico simulado - Saturación de Oxígeno a lo largo del test
-                <div className="mt-4 h-40 bg-white rounded flex items-center justify-center">
-                  [Gráfico interactivo con Recharts]
-                </div>
-              </div>
-            </div>
+            <MiniLineChart
+              title="Evolución de Frecuencia Cardíaca"
+              colorClass="bg-red-50"
+              stroke="#dc2626"
+              data={chartSeries.fc}
+              unit="BPM"
+            />
 
-            <div>
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Distancia Acumulada</h3>
-              <div className="bg-gray-100 rounded-lg p-8 text-center text-gray-600">
-                📍 Gráfico simulado - Distancia acumulada a lo largo del test
-                <div className="mt-4 h-40 bg-white rounded flex items-center justify-center">
-                  [Gráfico interactivo con Recharts]
-                </div>
-              </div>
-            </div>
+            <MiniLineChart
+              title="Evolución de SpO₂"
+              colorClass="bg-cyan-50"
+              stroke="#0891b2"
+              data={chartSeries.spo2}
+              unit="%"
+            />
+
+            <MiniLineChart
+              title="Distancia Acumulada"
+              colorClass="bg-emerald-50"
+              stroke="#059669"
+              data={chartSeries.distancia}
+              unit="m"
+            />
           </div>
         </Card>
       )}

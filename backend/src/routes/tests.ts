@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { db } from '../database';
 import { authMiddleware, AuthRequest } from '../middleware';
 import { Test, TestReading, Alert, CreateTestRequest } from '../types';
+import { broadcastAlert, broadcastReading } from '../realtime';
 
 const router = express.Router();
 
@@ -79,10 +80,12 @@ router.post('/:id/readings', authMiddleware, async (req: AuthRequest, res: Respo
       spo2,
       pasos,
       distancia,
+      tiempo: typeof tiempo === 'number' ? tiempo : 0,
       timestamp: new Date(),
     };
 
     await db.addTestReading(req.params.id, reading);
+    broadcastReading(req.params.id, reading);
     res.status(201).json(reading);
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });
@@ -103,6 +106,7 @@ router.post('/:id/alerts', authMiddleware, async (req: AuthRequest, res: Respons
     };
 
     await db.addTestAlert(req.params.id, alert);
+    broadcastAlert(req.params.id, alert);
     res.status(201).json(alert);
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });

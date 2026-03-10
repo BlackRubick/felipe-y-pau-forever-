@@ -360,9 +360,17 @@ export class Database {
     const connection = await pool.getConnection();
     try {
       await connection.execute(
-        `INSERT INTO test_readings (id, testId, frecuenciaCardiaca, spo2, pasos, distancia)
-         VALUES (?, ?, ?, ?, ?, ?)`,
-        [reading.id, testId, reading.frecuenciaCardiaca, reading.spo2, reading.pasos, reading.distancia]
+        `INSERT INTO test_readings (id, testId, frecuenciaCardiaca, spo2, pasos, distancia, tiempo)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          reading.id,
+          testId,
+          reading.frecuenciaCardiaca,
+          reading.spo2,
+          reading.pasos,
+          reading.distancia,
+          reading.tiempo ?? 0,
+        ]
       );
       return reading;
     } finally {

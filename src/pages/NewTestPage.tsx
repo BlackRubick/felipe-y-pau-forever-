@@ -123,7 +123,7 @@ export const NewTestPage: React.FC = () => {
         confirmButtonColor: '#10b981',
       });
       resetForm();
-      navigate('/reportes');
+      navigate(`/reportes?testId=${encodeURIComponent(test.id)}&tab=graficos`);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Error creando prueba';
       Swal.fire({
