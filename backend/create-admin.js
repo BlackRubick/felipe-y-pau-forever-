@@ -1,8 +1,3 @@
-/**
- * Script para crear usuario admin@hotmail.com
- * Ejecutar con: node create-admin.js
- */
-
 const mysql = require('mysql2/promise');
 const bcryptjs = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');

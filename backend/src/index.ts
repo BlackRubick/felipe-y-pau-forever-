@@ -11,6 +11,7 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const HOST = process.env.HOST || '0.0.0.0';
 const server = http.createServer(app);
 
 app.use(express.json());
@@ -41,8 +42,9 @@ async function startServer() {
     initializeRealtimeServer(server);
     console.log('✅ Base de datos inicializada correctamente');
     
-    server.listen(PORT, () => {
+    server.listen(Number(PORT), HOST, () => {
       console.log(`\n🚀 API Server running at http://localhost:${PORT}`);
+      console.log(`🌐 LAN access: http://<TU_IP_LOCAL>:${PORT}`);
       console.log(`📝 CORS enabled for: ${process.env.CORS_ORIGIN || 'http://localhost:3000'}`);
       console.log(`🔌 WebSocket: ws://localhost:${PORT}/ws/tests?testId=<id>`);
       console.log(`\n✅ Available endpoints:`);
