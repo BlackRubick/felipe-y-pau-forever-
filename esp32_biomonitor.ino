@@ -11,12 +11,8 @@
 
 const char* ssid      = "Totalplay-F3A4";
 const char* password  = "F3A4F5CED2EaHjhh";
-const char* serverURL = "http://192.168.100.252:3001";
-const char* authToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjAwY2VmNDY3LTAwNzgtNGRkZS04YWE5LTMyN2M1MDkzMTgxYiIsImVtYWlsIjoiYW1heWFAaG90bWFpbC5jb20iLCJyb2xlIjoibWVkaWNvIiwiaWF0IjoxNzczMjUwMTU2LCJleHAiOjE3NzMzMzY1NTZ9.k9Jiyxdl2E9T-Nnp4GiloIM8QuvFSL2e9r_nEx1VGcg";
+const char* serverURL = "http://192.168.100.248:3001";
 
-
-const bool USAR_TEST_ID_FIJO = true;
-const char* TEST_ID_FIJO = "test-72f4ca6a&tab"; 
 
 // ================== PANTALLA ==================
 #define ANCHO_PANTALLA      128
@@ -162,13 +158,7 @@ void setup() {
 
   conectarWiFi();
 
-  if (USAR_TEST_ID_FIJO && strlen(TEST_ID_FIJO) > 0) {
-    testIdActual = normalizarTestId(String(TEST_ID_FIJO));
-    tiempoInicioTest = millis();
-    Serial.println("Usando TEST_ID_FIJO: " + testIdActual);
-  } else {
-    crearNuevoTest();
-  }
+  crearNuevoTest();
 
   Serial.println("=== Sistema iniciado ===");
 }
@@ -290,7 +280,7 @@ bool prepararHttp(HTTPClient& http, const String& url) {
   }
   http.begin(url);
   http.addHeader("Content-Type", "application/json");
-  http.addHeader("Authorization", String("Bearer ") + authToken);
+  // No Authorization header
   return true;
 }
 

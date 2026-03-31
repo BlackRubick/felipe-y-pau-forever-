@@ -7,7 +7,7 @@ import { broadcastAlert, broadcastReading } from '../realtime';
 
 const router = express.Router();
 
-router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.post('/', async (req, res: Response) => {
   try {
     const {
       paciente,
@@ -48,7 +48,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
   }
 });
 
-router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.get('/', async (req, res: Response) => {
   try {
     const allTests = await db.getAllTests();
     res.json(allTests);
@@ -57,7 +57,7 @@ router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
   }
 });
 
-router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.get('/:id', async (req, res: Response) => {
   try {
     const test = await db.getTestById(req.params.id);
     if (!test) {
@@ -70,7 +70,7 @@ router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
   }
 });
 
-router.post('/:id/readings', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.post('/:id/readings', async (req, res: Response) => {
   try {
     const { frecuenciaCardiaca, spo2, pasos, distancia, tiempo } = req.body;
 
@@ -92,7 +92,7 @@ router.post('/:id/readings', authMiddleware, async (req: AuthRequest, res: Respo
   }
 });
 
-router.post('/:id/alerts', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.post('/:id/alerts', async (req, res: Response) => {
   try {
     const { tipo, severidad, valor, mensaje } = req.body;
 
@@ -113,7 +113,7 @@ router.post('/:id/alerts', authMiddleware, async (req: AuthRequest, res: Respons
   }
 });
 
-router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.put('/:id', async (req, res: Response) => {
   try {
     const { estado, duracion, distanciaTotal, fcPromedio, spo2Promedio, observaciones } =
       req.body;
@@ -138,7 +138,7 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
   }
 });
 
-router.put('/:id/finalize', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.put('/:id/finalize', async (req, res: Response) => {
   try {
     const test = await db.getTestById(req.params.id);
     if (!test) {
@@ -167,7 +167,7 @@ router.put('/:id/finalize', authMiddleware, async (req: AuthRequest, res: Respon
   }
 });
 
-router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.delete('/:id', async (req, res: Response) => {
   try {
     const updated = await db.updateTest(req.params.id, { estado: 'cancelada' });
     if (!updated) {
