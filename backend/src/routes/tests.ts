@@ -6,6 +6,7 @@ import { Test, TestReading, Alert, CreateTestRequest } from '../types';
 import { broadcastAlert, broadcastReading } from '../realtime';
 
 const router = express.Router();
+let currentActiveTestId: string | null = null;
 
 router.post('/', async (req, res: Response) => {
   try {
@@ -42,6 +43,7 @@ router.post('/', async (req, res: Response) => {
     };
 
     const created = await db.createTest(newTest);
+    currentActiveTestId = created.id;
     res.status(201).json(created);
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });
@@ -59,6 +61,17 @@ router.get('/', async (req, res: Response) => {
 
 router.get('/active', async (req, res: Response) => {
   try {
+    if (currentActiveTestId) {
+      const activeById = await db.getTestById(currentActiveTestId);
+
+      if (activeById && activeById.estado === 'en_progreso') {
+        res.json(activeById);
+        return;
+      }
+
+      currentActiveTestId = null;
+    }
+
     const allTests = await db.getAllTests();
     const activeTests = allTests
       .filter((test) => test.estado === 'en_progreso')
@@ -71,6 +84,7 @@ router.get('/active', async (req, res: Response) => {
       return;
     }
 
+    currentActiveTestId = activeTest.id;
     res.json(activeTest);
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });
@@ -152,6 +166,12 @@ router.put('/:id', async (req, res: Response) => {
       return;
     }
 
+    if (estado === 'en_progreso') {
+      currentActiveTestId = req.params.id;
+    } else if (currentActiveTestId === req.params.id) {
+      currentActiveTestId = null;
+    }
+
     res.json(updated);
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });
@@ -181,6 +201,10 @@ router.put('/:id/finalize', async (req, res: Response) => {
       estado: 'completada',
     });
 
+    if (currentActiveTestId === req.params.id) {
+      currentActiveTestId = null;
+    }
+
     res.json(updated);
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });
@@ -194,6 +218,11 @@ router.delete('/:id', async (req, res: Response) => {
       res.status(404).json({ error: 'Test not found' });
       return;
     }
+
+    if (currentActiveTestId === req.params.id) {
+      currentActiveTestId = null;
+    }
+
     res.json(updated);
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });
