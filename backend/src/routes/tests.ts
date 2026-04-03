@@ -9,16 +9,6 @@ const router = express.Router();
 let currentActiveTestId: string | null = null;
 
 const resolveActiveTest = async (): Promise<Test | null> => {
-  if (currentActiveTestId) {
-    const activeById = await db.getTestById(currentActiveTestId);
-
-    if (activeById && activeById.estado === 'en_progreso') {
-      return activeById;
-    }
-
-    currentActiveTestId = null;
-  }
-
   const allTests = await db.getAllTests();
   const activeTests = allTests
     .filter((test) => test.estado === 'en_progreso')
@@ -26,7 +16,12 @@ const resolveActiveTest = async (): Promise<Test | null> => {
 
   const activeTest = activeTests[0] || null;
   if (activeTest) {
-    currentActiveTestId = activeTest.id;
+    if (currentActiveTestId !== activeTest.id) {
+      currentActiveTestId = activeTest.id;
+      console.log('🔁 Active test switched to latest:', currentActiveTestId);
+    }
+  } else {
+    currentActiveTestId = null;
   }
 
   return activeTest;
