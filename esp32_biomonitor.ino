@@ -67,11 +67,13 @@ unsigned long lastDisplayUpdate = 0;
 unsigned long lastJsonSend = 0;
 unsigned long lastServerSend = 0;
 unsigned long lastWifiRetry = 0;
+unsigned long lastTestSync = 0;
 
 #define DISPLAY_INTERVAL          500
 #define JSON_INTERVAL             1000
 #define ENVIO_SERVIDOR_INTERVAL   5000
 #define WIFI_RETRY_INTERVAL       10000
+#define TEST_SYNC_INTERVAL        10000
 
 const char* DEVICE_ID = "esp32_01";
 
@@ -90,7 +92,7 @@ void  enviarJSON();
 void  conectarWiFi();
 void  asegurarWiFi();
 
-void  crearNuevoTest();
+void  sincronizarTestActivo();
 void  enviarLecturaServidor();
 void  actualizarTest();
 String normalizarTestId(const String& input);
@@ -160,7 +162,7 @@ void setup() {
 
   conectarWiFi();
 
-  crearNuevoTest();
+  sincronizarTestActivo();
 
   Serial.println("=== Sistema iniciado ===");
 }
@@ -168,6 +170,11 @@ void setup() {
 // =======================================================
 void loop() {
   asegurarWiFi();
+
+  if (millis() - lastTestSync >= TEST_SYNC_INTERVAL) {
+    lastTestSync = millis();
+    sincronizarTestActivo();
+  }
 
   long Valor_IR   = SensorMax30102.getIR();
   long Valor_Rojo = SensorMax30102.getRed();
@@ -226,8 +233,8 @@ void loop() {
     lastServerSend = millis();
 
     if (testIdActual.length() == 0) {
-      Serial.println("Sin testIdActual. Intentando crear test...");
-      crearNuevoTest();
+      Serial.println("Sin testIdActual. Intentando sincronizar test activo...");
+      sincronizarTestActivo();
     } else {
       enviarLecturaServidor();
       actualizarTest();
@@ -303,53 +310,37 @@ void logHttpError(HTTPClient& http, int code, const char* contexto) {
 }
 
 // =======================================================
-void crearNuevoTest() {
+void sincronizarTestActivo() {
   if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("WiFi no conectado. No se puede crear test.");
     return;
   }
 
   HTTPClient http;
-  String url = String(serverURL) + "/api/tests";
+  String url = String(serverURL) + "/api/tests/active";
   if (!prepararHttp(http, url)) return;
 
-  DynamicJsonDocument doc(768);
-  doc["paciente"]["id"]            = "patient-esp32";
-  doc["paciente"]["nombreCompleto"] = "Paciente ESP32";
-  doc["paciente"]["edad"]           = 30;
-  doc["paciente"]["altura"]         = 170;
-  doc["paciente"]["peso"]           = 70;
-  doc["paciente"]["sexo"]           = "M";
-  doc["paciente"]["raza"]           = "Latina";
-  doc["medicoResponsable"]          = "ESP32";
-  doc["enfermedadPulmonar"]         = "EPOC";
-  doc["numeroCaminata"]             = 1;
-  doc["fechaCaminata"]              = "2026-03-11";
-  doc["presionSanguineaInicial"]    = "120/80";
-  doc["oxigenoSupplementario"]      = false;
-  doc["observacionesPrevias"]       = "Creado desde ESP32";
+  int httpResponseCode = http.GET();
 
-  String json;
-  serializeJson(doc, json);
-
-  int httpResponseCode = http.POST(json);
-
-  if (httpResponseCode == 201) {
+  if (httpResponseCode == 200) {
     String response = http.getString();
-    DynamicJsonDocument docResponse(1024);
+    DynamicJsonDocument docResponse(1536);
     DeserializationError err = deserializeJson(docResponse, response);
 
     if (err) {
-      Serial.print("Error parseando respuesta create test: ");
+      Serial.print("Error parseando respuesta test activo: ");
       Serial.println(err.c_str());
-      testIdActual = "";
     } else {
-      testIdActual = docResponse["id"].as<String>();
-      tiempoInicioTest = millis();
-      Serial.println("Test creado: " + testIdActual);
+      String nuevoTestId = docResponse["id"].as<String>();
+      if (nuevoTestId.length() > 0 && nuevoTestId != testIdActual) {
+        testIdActual = nuevoTestId;
+        tiempoInicioTest = millis();
+        Serial.println("Test activo sincronizado: " + testIdActual);
+      }
     }
+  } else if (httpResponseCode == 404) {
+    Serial.println("No hay test activo todavía. Esperando a que se inicie uno desde el frontend...");
   } else {
-    logHttpError(http, httpResponseCode, "crear test");
+    logHttpError(http, httpResponseCode, "buscar test activo");
   }
 
   http.end();

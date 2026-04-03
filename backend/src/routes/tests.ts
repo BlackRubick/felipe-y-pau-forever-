@@ -57,6 +57,26 @@ router.get('/', async (req, res: Response) => {
   }
 });
 
+router.get('/active', async (req, res: Response) => {
+  try {
+    const allTests = await db.getAllTests();
+    const activeTests = allTests
+      .filter((test) => test.estado === 'en_progreso')
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    const activeTest = activeTests[0];
+
+    if (!activeTest) {
+      res.status(404).json({ error: 'No active test found' });
+      return;
+    }
+
+    res.json(activeTest);
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 router.get('/:id', async (req, res: Response) => {
   try {
     const test = await db.getTestById(req.params.id);
