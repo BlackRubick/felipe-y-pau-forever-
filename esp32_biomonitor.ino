@@ -9,9 +9,9 @@
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 
-const char* ssid      = "Totalplay-F3A4";
-const char* password  = "F3A4F5CED2EaHjhh";
-const char* serverURL = "http://192.168.100.248:3001";
+const char* ssid      = "2009-5b2_2.4G";
+const char* password  = "arbol21022010";
+const char* serverURL = "http://192.168.100.8:3001";
 
 
 // ================== PANTALLA ==================
@@ -93,6 +93,7 @@ void  conectarWiFi();
 void  asegurarWiFi();
 
 void  sincronizarTestActivo();
+bool  buscarTestActivoDesdeLista(String& testIdEncontrado);
 void  enviarLecturaServidor();
 void  actualizarTest();
 String normalizarTestId(const String& input);
@@ -309,6 +310,51 @@ void logHttpError(HTTPClient& http, int code, const char* contexto) {
   }
 }
 
+bool buscarTestActivoDesdeLista(String& testIdEncontrado) {
+  HTTPClient http;
+  String url = String(serverURL) + "/api/tests";
+  if (!prepararHttp(http, url)) return false;
+
+  int code = http.GET();
+  if (code != 200) {
+    logHttpError(http, code, "listar tests (fallback)");
+    http.end();
+    return false;
+  }
+
+  String response = http.getString();
+  if (response.length() == 0) {
+    Serial.println("Respuesta vacia en /api/tests (fallback)");
+    http.end();
+    return false;
+  }
+
+  DynamicJsonDocument doc(16384);
+  DeserializationError err = deserializeJson(doc, response);
+  if (err || !doc.is<JsonArray>()) {
+    Serial.print("Error parseando lista de tests: ");
+    Serial.println(err.c_str());
+    Serial.print("Longitud respuesta /api/tests: ");
+    Serial.println(response.length());
+    http.end();
+    return false;
+  }
+
+  JsonArray arr = doc.as<JsonArray>();
+  for (JsonObject item : arr) {
+    const char* estado = item["estado"] | "";
+    const char* id = item["id"] | "";
+    if (strcmp(estado, "en_progreso") == 0 && strlen(id) > 0) {
+      testIdEncontrado = String(id);
+      http.end();
+      return true;
+    }
+  }
+
+  http.end();
+  return false;
+}
+
 // =======================================================
 void sincronizarTestActivo() {
   if (WiFi.status() != WL_CONNECTED) {
@@ -316,13 +362,15 @@ void sincronizarTestActivo() {
   }
 
   HTTPClient http;
-  String url = String(serverURL) + "/api/tests/active";
+  String url = String(serverURL) + "/api/tests/current";
   if (!prepararHttp(http, url)) return;
 
   int httpResponseCode = http.GET();
 
   if (httpResponseCode == 200) {
     String response = http.getString();
+    http.end();
+
     DynamicJsonDocument docResponse(1536);
     DeserializationError err = deserializeJson(docResponse, response);
 
@@ -338,12 +386,27 @@ void sincronizarTestActivo() {
       }
     }
   } else if (httpResponseCode == 404) {
-    Serial.println("No hay test activo todavía. Esperando a que se inicie uno desde el frontend...");
+    String body = http.getString();
+    http.end();
+
+    if (body.indexOf("Test not found") >= 0 || body.indexOf("No active test found") >= 0) {
+      String fallbackId = "";
+      if (buscarTestActivoDesdeLista(fallbackId)) {
+        if (fallbackId != testIdActual) {
+          testIdActual = fallbackId;
+          tiempoInicioTest = millis();
+          Serial.println("Test activo (fallback) sincronizado: " + testIdActual);
+        }
+      } else {
+        Serial.println("No hay test activo todavia. Esperando a que se inicie uno desde el frontend...");
+      }
+    } else {
+      Serial.println("No hay test activo todavia. Esperando a que se inicie uno desde el frontend...");
+    }
   } else {
     logHttpError(http, httpResponseCode, "buscar test activo");
+    http.end();
   }
-
-  http.end();
 }
 
 // =======================================================

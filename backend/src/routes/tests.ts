@@ -8,6 +8,30 @@ import { broadcastAlert, broadcastReading } from '../realtime';
 const router = express.Router();
 let currentActiveTestId: string | null = null;
 
+const resolveActiveTest = async (): Promise<Test | null> => {
+  if (currentActiveTestId) {
+    const activeById = await db.getTestById(currentActiveTestId);
+
+    if (activeById && activeById.estado === 'en_progreso') {
+      return activeById;
+    }
+
+    currentActiveTestId = null;
+  }
+
+  const allTests = await db.getAllTests();
+  const activeTests = allTests
+    .filter((test) => test.estado === 'en_progreso')
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  const activeTest = activeTests[0] || null;
+  if (activeTest) {
+    currentActiveTestId = activeTest.id;
+  }
+
+  return activeTest;
+};
+
 router.post('/', async (req, res: Response) => {
   try {
     const {
@@ -61,38 +85,46 @@ router.get('/', async (req, res: Response) => {
 
 router.get('/active', async (req, res: Response) => {
   try {
-    if (currentActiveTestId) {
-      const activeById = await db.getTestById(currentActiveTestId);
-
-      if (activeById && activeById.estado === 'en_progreso') {
-        res.json(activeById);
-        return;
-      }
-
-      currentActiveTestId = null;
-    }
-
-    const allTests = await db.getAllTests();
-    const activeTests = allTests
-      .filter((test) => test.estado === 'en_progreso')
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-    const activeTest = activeTests[0];
+    const activeTest = await resolveActiveTest();
 
     if (!activeTest) {
       res.status(404).json({ error: 'No active test found' });
       return;
     }
 
-    currentActiveTestId = activeTest.id;
     res.json(activeTest);
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-router.get('/:id', async (req, res: Response) => {
+router.get('/current', async (req, res: Response) => {
   try {
+    const activeTest = await resolveActiveTest();
+
+    if (!activeTest) {
+      res.status(404).json({ error: 'No active test found' });
+      return;
+    }
+
+    res.json(activeTest);
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.get('/:id((?!active$)[A-Za-z0-9\-]+)', async (req, res: Response) => {
+  try {
+    if (req.params.id === 'active' || req.params.id === 'current') {
+      const activeTest = await resolveActiveTest();
+      if (!activeTest) {
+        res.status(404).json({ error: 'No active test found' });
+        return;
+      }
+      res.json(activeTest);
+      return;
+    }
+
     const test = await db.getTestById(req.params.id);
     if (!test) {
       res.status(404).json({ error: 'Test not found' });
