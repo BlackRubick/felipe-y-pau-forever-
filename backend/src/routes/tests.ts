@@ -92,6 +92,13 @@ router.post('/', async (req, res: Response) => {
 
 router.get('/', async (req, res: Response) => {
   try {
+    if (req.query.lite === '1') {
+      const limit = Number(req.query.limit || 25);
+      const lite = await db.getAllTestsLite(Number.isFinite(limit) ? limit : 25);
+      res.json(lite);
+      return;
+    }
+
     const allTests = await db.getAllTests();
     res.json(allTests);
   } catch (error) {

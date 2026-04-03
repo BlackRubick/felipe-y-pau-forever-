@@ -291,6 +291,24 @@ export class Database {
     }
   }
 
+  async getAllTestsLite(limit: number = 25): Promise<Array<{ id: string; estado: string; createdAt: Date }>> {
+    const connection = await pool.getConnection();
+    try {
+      const [rows]: any = await connection.execute(
+        'SELECT id, estado, createdAt FROM tests ORDER BY createdAt DESC LIMIT ?',
+        [limit]
+      );
+
+      return rows.map((row: any) => ({
+        id: row.id,
+        estado: row.estado,
+        createdAt: row.createdAt,
+      }));
+    } finally {
+      connection.release();
+    }
+  }
+
   async getTestsByDoctor(doctorName: string): Promise<Test[]> {
     const connection = await pool.getConnection();
     try {

@@ -77,6 +77,10 @@ unsigned long lastTestSync = 0;
 
 const char* DEVICE_ID = "esp32_01";
 
+// Si lo llenas con un test real (ej. "test-379171e8"), el ESP32 enviara directo ahi.
+// Dejalo vacio para seguir con sincronizacion automatica.
+const char* FORCED_TEST_ID = "";
+
 // ================== TEST ==================
 String testIdActual = "";
 unsigned long tiempoInicioTest = 0;
@@ -93,6 +97,8 @@ void  conectarWiFi();
 void  asegurarWiFi();
 
 void  sincronizarTestActivo();
+bool  obtenerTestIdDesdeEndpoint(const String& endpoint, String& outTestId);
+bool  obtenerTestIdDesdeLista(String& outTestId);
 void  enviarLecturaServidor();
 void  actualizarTest();
 String normalizarTestId(const String& input);
@@ -290,7 +296,10 @@ bool prepararHttp(HTTPClient& http, const String& url) {
   http.useHTTP10(true);
   http.begin(url);
   http.addHeader("Content-Type", "application/json");
+  http.addHeader("Accept", "application/json");
   http.addHeader("Connection", "close");
+  http.addHeader("Cache-Control", "no-cache");
+  http.addHeader("Pragma", "no-cache");
   http.setTimeout(8000);
   // No Authorization header
   return true;
@@ -312,45 +321,140 @@ void logHttpError(HTTPClient& http, int code, const char* contexto) {
   }
 }
 
+bool obtenerTestIdDesdeEndpoint(const String& endpoint, String& outTestId) {
+  HTTPClient http;
+  String url = String(serverURL) + endpoint;
+  if (!prepararHttp(http, url)) return false;
+
+  int code = http.GET();
+  Serial.print("Sync ");
+  Serial.print(endpoint);
+  Serial.print(" HTTP: ");
+  Serial.println(code);
+
+  if (code != 200) {
+    if (code == 404) {
+      String body404 = http.getString();
+      Serial.print("Sync ");
+      Serial.print(endpoint);
+      Serial.print(" body 404: ");
+      Serial.println(body404);
+    }
+    http.end();
+    return false;
+  }
+
+  String response = http.getString();
+  http.end();
+
+  if (response.length() == 0) {
+    Serial.print("Sync ");
+    Serial.print(endpoint);
+    Serial.println(" respuesta vacia");
+    return false;
+  }
+
+  DynamicJsonDocument doc(4096);
+  DeserializationError err = deserializeJson(doc, response);
+  if (err || !doc.is<JsonObject>()) {
+    Serial.print("Error parseando ");
+    Serial.print(endpoint);
+    Serial.print(": ");
+    Serial.println(err.c_str());
+    return false;
+  }
+
+  String id = doc["id"].as<String>();
+  if (id.length() == 0) return false;
+
+  outTestId = id;
+  return true;
+}
+
+bool obtenerTestIdDesdeLista(String& outTestId) {
+  HTTPClient http;
+  String url = String(serverURL) + "/api/tests?lite=1&limit=25";
+  if (!prepararHttp(http, url)) return false;
+
+  int code = http.GET();
+  Serial.print("Fallback /api/tests HTTP: ");
+  Serial.println(code);
+  if (code != 200) {
+    http.end();
+    return false;
+  }
+
+  String response = http.getString();
+  http.end();
+
+  Serial.print("Fallback /api/tests bytes: ");
+  Serial.println(response.length());
+  if (response.length() == 0) return false;
+
+  DynamicJsonDocument doc(32768);
+  DeserializationError err = deserializeJson(doc, response);
+  if (err || !doc.is<JsonArray>()) {
+    Serial.print("Error parseando lista tests: ");
+    Serial.println(err.c_str());
+    return false;
+  }
+
+  JsonArray arr = doc.as<JsonArray>();
+  for (JsonObject item : arr) {
+    const char* estado = item["estado"] | "";
+    const char* id = item["id"] | "";
+    if (strcmp(estado, "en_progreso") == 0 && strlen(id) > 0) {
+      outTestId = String(id);
+      return true;
+    }
+  }
+
+  // Ultimo recurso: tomar el primer test disponible si no hay estado en_progreso
+  if (arr.size() > 0) {
+    const char* id = arr[0]["id"] | "";
+    if (strlen(id) > 0) {
+      outTestId = String(id);
+      return true;
+    }
+  }
+
+  return false;
+}
+
 // =======================================================
 void sincronizarTestActivo() {
   if (WiFi.status() != WL_CONNECTED) {
     return;
   }
 
-  HTTPClient http;
-  String url = String(serverURL) + "/api/tests/device/current";
-  if (!prepararHttp(http, url)) return;
-
-  int httpResponseCode = http.GET();
-  Serial.print("Sync /api/tests/current HTTP: ");
-  Serial.println(httpResponseCode);
-
-  if (httpResponseCode == 200) {
-    String response = http.getString();
-    http.end();
-
-    DynamicJsonDocument docResponse(1536);
-    DeserializationError err = deserializeJson(docResponse, response);
-
-    if (err) {
-      Serial.print("Error parseando respuesta test activo: ");
-      Serial.println(err.c_str());
-    } else {
-      String nuevoTestId = docResponse["id"].as<String>();
-      if (nuevoTestId.length() > 0 && nuevoTestId != testIdActual) {
-        testIdActual = nuevoTestId;
-        tiempoInicioTest = millis();
-        Serial.println("Test activo sincronizado: " + testIdActual);
-      }
+  if (strlen(FORCED_TEST_ID) > 0) {
+    String forced = String(FORCED_TEST_ID);
+    if (forced != testIdActual) {
+      testIdActual = forced;
+      tiempoInicioTest = millis();
+      Serial.println("Test forzado manualmente: " + testIdActual);
     }
-  } else if (httpResponseCode == 404) {
-    http.end();
-    Serial.println("No hay test activo todavia. Esperando a que se inicie uno desde el frontend...");
-  } else {
-    logHttpError(http, httpResponseCode, "buscar test activo");
-    http.end();
+    return;
   }
+
+  String nuevoTestId = "";
+  bool ok = false;
+
+  ok = obtenerTestIdDesdeEndpoint("/api/tests/device/current", nuevoTestId);
+  if (!ok) ok = obtenerTestIdDesdeEndpoint("/api/tests/current", nuevoTestId);
+  if (!ok) ok = obtenerTestIdDesdeEndpoint("/api/tests/active", nuevoTestId);
+  if (!ok) ok = obtenerTestIdDesdeLista(nuevoTestId);
+
+  if (ok && nuevoTestId.length() > 0) {
+    if (nuevoTestId != testIdActual) {
+      testIdActual = nuevoTestId;
+      tiempoInicioTest = millis();
+      Serial.println("Test activo sincronizado: " + testIdActual);
+    }
+    return;
+  }
+
+  Serial.println("No hay test activo todavia. Esperando a que se inicie uno desde el frontend...");
 }
 
 // =======================================================
