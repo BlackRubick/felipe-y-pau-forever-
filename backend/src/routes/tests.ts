@@ -84,7 +84,8 @@ router.post('/', async (req, res: Response) => {
 
     const created = await db.createTest(newTest);
     currentActiveTestId = created.id;
-    res.status(201).json(created);
+    const persisted = await db.getTestById(created.id);
+    res.status(201).json(persisted || created);
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -169,6 +170,12 @@ router.get('/:id((?!active$)[A-Za-z0-9\-]+)', async (req, res: Response) => {
 
     const test = await db.getTestById(req.params.id);
     if (!test) {
+      const fallback = await resolveDeviceCurrentTest();
+      if (fallback) {
+        res.json(fallback);
+        return;
+      }
+
       res.status(404).json({ error: 'Test not found' });
       return;
     }

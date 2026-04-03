@@ -187,10 +187,20 @@ export const ReportesPage: React.FC = () => {
       try {
         const testId = searchParams.get('testId');
         if (testId) {
-          const test = await testService.getTest(testId);
-          setCurrentTest(test);
-          setLastRefresh(new Date());
-          console.log('✅ Test cargado:', test.id, 'Lecturas:', test.readings.length);
+          try {
+            const test = await testService.getTest(testId);
+            setCurrentTest(test);
+            setLastRefresh(new Date());
+            console.log('✅ Test cargado:', test.id, 'Lecturas:', test.readings.length);
+          } catch {
+            const all = await testService.getAllTests();
+            const fallback = all[0] || null;
+            setCurrentTest(fallback);
+            setLastRefresh(new Date());
+            if (fallback) {
+              console.warn('⚠️ testId no encontrado, usando fallback:', fallback.id);
+            }
+          }
         } else {
           const all = await testService.getAllTests();
           setCurrentTest(all[0] || null);
