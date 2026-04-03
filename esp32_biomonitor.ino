@@ -48,10 +48,11 @@ const float MAX_GYRO  = 8.727f;
 float accel_x = 0.0f;
 float gyro_x  = 0.0f;
 
-// ================== PASOS ==================
+// ================== PASOS & DISTANCIA ==================
 #define PASO_UMBRAL       0.02f
 #define PASO_DEBOUNCE_MS  300
 #define FILTRO_VENTANA    6
+#define LONG_PASO_CM      75  // 0.75 metros por paso (ajustable)
 
 float filtroBuffer[FILTRO_VENTANA] = {0};
 uint8_t filtroIndice = 0;
@@ -59,6 +60,7 @@ float senalFiltrada = 0.0f;
 int8_t estadoCruce = 0;
 unsigned long ultimoPaso = 0;
 unsigned long contadorPasos = 0;
+unsigned long distanciaAcumuladaCm = 0;  // Nueva variable para acumular distancia
 
 // ================== TIMERS ==================
 unsigned long lastDisplayUpdate = 0;
@@ -367,7 +369,7 @@ void enviarLecturaServidor() {
   doc["frecuenciaCardiaca"] = hayDedo ? (int)Latidos_Promedio : 0;
   doc["spo2"]               = hayDedo ? (int)spo2 : 0;
   doc["pasos"]              = contadorPasos;
-  doc["distancia"]          = 0;
+  doc["distancia"]          = distanciaAcumuladaCm / 100;  // Convertir cm a metros
   doc["tiempo"]             = elapsedSec;
 
   String json;
@@ -396,6 +398,7 @@ void actualizarTest() {
 
   DynamicJsonDocument doc(256);
   doc["duracion"]     = duracionSec;
+  doc["distanciaTotal"] = distanciaAcumuladaCm / 100;  // Convertir a metros
   doc["fcPromedio"]   = hayDedo ? (int)Latidos_Promedio : 0;
   doc["spo2Promedio"] = hayDedo ? (int)spo2 : 0;
   doc["estado"]       = "en_progreso";
@@ -422,6 +425,7 @@ void enviarJSON() {
   Serial.print("\"bpm\":");         Serial.print(hayDedo ? (int)Latidos_Promedio : 0); Serial.print(",");
   Serial.print("\"spo2\":");        Serial.print(hayDedo ? (int)spo2 : 0); Serial.print(",");
   Serial.print("\"pasos\":");       Serial.print(contadorPasos); Serial.print(",");
+  Serial.print("\"distancia_m\":");  Serial.print(distanciaAcumuladaCm / 100.0); Serial.print(",");
   Serial.print("\"ax\":");          Serial.print(accel_x, 3); Serial.print(",");
   Serial.print("\"gx\":");          Serial.print(gyro_x, 3); Serial.print(",");
   Serial.print("\"wifi\":");        Serial.print(WiFi.status() == WL_CONNECTED ? 1 : 0); Serial.print(",");
@@ -454,6 +458,7 @@ void detectarPaso(float senal) {
       unsigned long ahora = millis();
       if (ahora - ultimoPaso >= PASO_DEBOUNCE_MS) {
         contadorPasos++;
+        distanciaAcumuladaCm += LONG_PASO_CM;  // Acumular distancia
         ultimoPaso = ahora;
       }
     }

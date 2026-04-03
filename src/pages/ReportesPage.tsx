@@ -19,9 +19,7 @@ interface LineChartPoint {
 const CHART_WINDOW_SIZE = 40;
 
 const getRealtimeWsUrl = (testId: string) => {
-  const apiBase = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
-  const normalizedBase = apiBase.endsWith('/api') ? apiBase.slice(0, -4) : apiBase;
-  const wsBase = normalizedBase.replace(/^http/, 'ws');
+  const wsBase = process.env.REACT_APP_WS_URL || 'ws://localhost:3001';
   return `${wsBase}/ws/tests?testId=${encodeURIComponent(testId)}`;
 };
 
@@ -184,9 +182,6 @@ export const ReportesPage: React.FC = () => {
   const [isWsConnected, setIsWsConnected] = useState(false);
 
   useEffect(() => {
-    const tab = searchParams.get('tab');
-    setActiveTab(tab === 'graficos' || tab === 'observaciones' ? tab : 'resumen');
-
     const load = async () => {
       setIsLoading(true);
       try {
@@ -195,11 +190,14 @@ export const ReportesPage: React.FC = () => {
           const test = await testService.getTest(testId);
           setCurrentTest(test);
           setLastRefresh(new Date());
+          console.log('✅ Test cargado:', test.id, 'Lecturas:', test.readings.length);
         } else {
           const all = await testService.getAllTests();
           setCurrentTest(all[0] || null);
           setLastRefresh(new Date());
         }
+      } catch (error) {
+        console.error('❌ Error cargando test:', error);
       } finally {
         setIsLoading(false);
       }
@@ -207,42 +205,53 @@ export const ReportesPage: React.FC = () => {
     load();
   }, [searchParams]);
 
+  // Polling fallback cuando WebSocket no está conectado
   useEffect(() => {
     if (activeTab !== 'graficos' || !currentTest?.id || isWsConnected) return;
 
+    console.log('📊 Iniciando polling (WebSocket no disponible)');
     const interval = setInterval(async () => {
       try {
         const updated = await testService.getTest(currentTest.id);
         setCurrentTest(updated);
         setLastRefresh(new Date());
-      } catch {
+      } catch (error) {
+        console.error('❌ Error en polling:', error);
       }
     }, 2000);
 
     return () => clearInterval(interval);
   }, [activeTab, currentTest?.id, isWsConnected]);
 
+  // WebSocket para datos en tiempo real
   useEffect(() => {
     if (activeTab !== 'graficos' || !currentTest?.id) return;
 
-    const ws = new WebSocket(getRealtimeWsUrl(currentTest.id));
+    const wsUrl = getRealtimeWsUrl(currentTest.id);
+    console.log('🔌 Conectando WebSocket a:', wsUrl);
+    
+    const ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
+      console.log('✅ WebSocket conectado');
       setIsWsConnected(true);
       setLastRefresh(new Date());
     };
 
     ws.onclose = () => {
+      console.log('❌ WebSocket cerrado');
       setIsWsConnected(false);
     };
 
-    ws.onerror = () => {
+    ws.onerror = (error) => {
+      console.error('❌ Error WebSocket:', error);
       setIsWsConnected(false);
     };
 
     ws.onmessage = (event) => {
       try {
         const message = JSON.parse(event.data) as BackendRealtimeMessage;
+        console.log('📨 Mensaje WebSocket recibido:', message.type);
 
         if (message.type === 'reading' && message.payload) {
           setCurrentTest((prev) => {
@@ -250,8 +259,13 @@ export const ReportesPage: React.FC = () => {
 
             const incoming = message.payload;
             const exists = prev.readings.some((r) => r.id === incoming.id);
-            if (exists) return prev;
+            if (exists) {
+              console.log('⏭️ Lectura duplicada, ignorando');
+              return prev;
+            }
 
+            console.log('📈 Nueva lectura:', { fc: incoming.frecuenciaCardiaca, spo2: incoming.spo2 });
+            
             return {
               ...prev,
               readings: [
@@ -273,6 +287,7 @@ export const ReportesPage: React.FC = () => {
         }
 
         if (message.type === 'alert' && message.payload) {
+          console.log('🚨 Nueva alerta:', message.payload.tipo);
           setCurrentTest((prev) => {
             if (!prev || prev.id !== message.testId) return prev;
 
@@ -298,11 +313,13 @@ export const ReportesPage: React.FC = () => {
           });
           setLastRefresh(new Date());
         }
-      } catch {
+      } catch (error) {
+        console.error('❌ Error procesando mensaje WebSocket:', error);
       }
     };
 
     return () => {
+      console.log('🛑 Cerrando WebSocket');
       ws.close();
       setIsWsConnected(false);
     };
