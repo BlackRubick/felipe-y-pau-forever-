@@ -32,6 +32,22 @@ const resolveActiveTest = async (): Promise<Test | null> => {
   return activeTest;
 };
 
+const resolveDeviceCurrentTest = async (): Promise<Test | null> => {
+  const active = await resolveActiveTest();
+  if (active) return active;
+
+  const allTests = await db.getAllTests();
+  const candidate = allTests
+    .filter((test) => test.estado !== 'cancelada')
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0] || null;
+
+  if (candidate) {
+    currentActiveTestId = candidate.id;
+  }
+
+  return candidate;
+};
+
 router.post('/', async (req, res: Response) => {
   try {
     const {
@@ -113,15 +129,34 @@ router.get('/current', async (req, res: Response) => {
   }
 });
 
+router.get('/device/current', async (req, res: Response) => {
+  try {
+    const current = await resolveDeviceCurrentTest();
+
+    if (!current) {
+      res.status(404).json({ error: 'No test available for device' });
+      return;
+    }
+
+    res.json({
+      id: current.id,
+      estado: current.estado,
+      createdAt: current.createdAt,
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 router.get('/:id((?!active$)[A-Za-z0-9\-]+)', async (req, res: Response) => {
   try {
-    if (req.params.id === 'active' || req.params.id === 'current') {
-      const activeTest = await resolveActiveTest();
-      if (!activeTest) {
-        res.status(404).json({ error: 'No active test found' });
+    if (req.params.id === 'active' || req.params.id === 'current' || req.params.id === 'device') {
+      const current = await resolveDeviceCurrentTest();
+      if (!current) {
+        res.status(404).json({ error: 'No test available for device' });
         return;
       }
-      res.json(activeTest);
+      res.json(current);
       return;
     }
 
