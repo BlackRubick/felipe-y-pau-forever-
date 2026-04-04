@@ -151,7 +151,6 @@ export const HistorialPage: React.FC = () => {
                   <p className="text-slate-600">No se encontraron pruebas</p>
                 </div>
               )}
-          </div>
         </div>
       </Card>
       {isLoading && <div className="text-center py-4 text-slate-600">Cargando historial...</div>}
