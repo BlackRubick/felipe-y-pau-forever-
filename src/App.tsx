@@ -13,7 +13,6 @@ function App() {
           <TestProvider>
             <TestTabProvider>
               <div className="App min-h-screen bg-gray-50">
-                <Navbar />
                 <Routes>
                   
                   <Route path="/login" element={<LoginPage />} />
@@ -24,6 +23,7 @@ function App() {
                     path="/nueva-prueba"
                     element={
                       <ProtectedRoute>
+                        <Navbar />
                         <NewTestPage />
                       </ProtectedRoute>
                     }
@@ -32,7 +32,8 @@ function App() {
                   <Route
                     path="/historial"
                     element={
-                      <ProtectedRoute>
+                      <PrNavbar />
+                        <otectedRoute>
                         <HistorialPage />
                       </ProtectedRoute>
                     }
@@ -41,7 +42,8 @@ function App() {
                   <Route
                     path="/reportes"
                     element={
-                      <ProtectedRoute>
+                      <PrNavbar />
+                        <otectedRoute>
                         <ReportesPage />
                       </ProtectedRoute>
                     }
@@ -55,7 +57,8 @@ function App() {
                   <Route
                     path="/pacientes"
                     element={
-                      <ProtectedRoute>
+                      <PrNavbar />
+                        <otectedRoute>
                         <PacientesPage />
                       </ProtectedRoute>
                     }
@@ -63,7 +66,8 @@ function App() {
 
                   <Route
                     path="/dispositivo"
-                    element={
+                    elemeNavbar />
+                        <nt={
                       <ProtectedRoute>
                         <DispositivoPage />
                       </ProtectedRoute>
