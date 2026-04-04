@@ -191,7 +191,24 @@ export const ReportesPage: React.FC = () => {
           const exact = all.find((t) => t.id === requestedTestId) || null;
 
           if (exact) {
-            setCurrentTest(exact);
+            if ((exact.readings?.length || 0) > 0) {
+              setCurrentTest(exact);
+              setLastRefresh(new Date());
+              console.log('✅ Test cargado por testId exacto:', exact.id, 'Lecturas:', exact.readings.length);
+              return;
+            }
+
+            // Si el listado viene resumido/sin lecturas, pedir detalle puntual por ID.
+            try {
+              const detailed = await testService.getTest(requestedTestId);
+              setCurrentTest(detailed);
+              setLastRefresh(new Date());
+              console.log('✅ Test detallado cargado:', detailed.id, 'Lecturas:', detailed.readings.length);
+              return;
+            } catch {
+              setCurrentTest(exact);
+            }
+
             setLastRefresh(new Date());
             console.log('✅ Test cargado por testId exacto:', exact.id, 'Lecturas:', exact.readings.length);
             return;

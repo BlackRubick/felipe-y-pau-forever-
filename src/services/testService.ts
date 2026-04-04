@@ -11,6 +11,16 @@ import {
 const mapBackendTestToFrontend = (backendTest: any): Test => {
   const createdAt = backendTest.createdAt ? new Date(backendTest.createdAt).toISOString() : new Date().toISOString();
   const fecha = backendTest.fecha ? new Date(backendTest.fecha).toISOString() : createdAt;
+  const backendReadings = Array.isArray(backendTest.lecturas)
+    ? backendTest.lecturas
+    : Array.isArray(backendTest.readings)
+      ? backendTest.readings
+      : [];
+  const backendAlerts = Array.isArray(backendTest.alertas)
+    ? backendTest.alertas
+    : Array.isArray(backendTest.alerts)
+      ? backendTest.alerts
+      : [];
 
   return {
     id: backendTest.id,
@@ -37,22 +47,22 @@ const mapBackendTestToFrontend = (backendTest: any): Test => {
     startTime: fecha,
     endTime: undefined,
     duration: backendTest.duracion || 0,
-    readings: (backendTest.lecturas || []).map((reading: any, index: number) => ({
+    readings: backendReadings.map((reading: any, index: number) => ({
       id: reading.id,
       testId: backendTest.id,
-      fc: reading.frecuenciaCardiaca,
+      fc: reading.frecuenciaCardiaca ?? reading.fc ?? 0,
       spo2: reading.spo2,
       pasos: reading.pasos,
       distancia: reading.distancia,
-      timestamp: typeof reading.tiempo === 'number' ? reading.tiempo : index,
+      timestamp: typeof reading.tiempo === 'number' ? reading.tiempo : typeof reading.timestamp === 'number' ? reading.timestamp : index,
       receivedAt: reading.timestamp ? new Date(reading.timestamp).toISOString() : new Date().toISOString(),
     })),
-    alerts: (backendTest.alertas || []).map((alert: any) => ({
+    alerts: backendAlerts.map((alert: any) => ({
       id: alert.id,
       testId: backendTest.id,
-      type: alert.tipo || 'caida_abrupta',
+      type: alert.tipo || alert.type || 'caida_abrupta',
       severity: alert.severidad || 'warning',
-      message: alert.mensaje || '',
+      message: alert.mensaje || alert.message || '',
       value: alert.valor,
       timestamp: 0,
     })),
