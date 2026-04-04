@@ -33,6 +33,8 @@ export const NewTestPage: React.FC = () => {
       observacionesPrevias: '',
     });
 
+
+    
   const ageError =
     touched.edad && values.edad && !validateAge(values.edad)
       ? 'Edad debe estar entre 1 y 120'
