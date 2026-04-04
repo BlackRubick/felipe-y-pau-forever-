@@ -206,6 +206,8 @@ export class Database {
   async createTest(test: Test): Promise<Test> {
     const connection = await pool.getConnection();
     try {
+      const safe = <T>(value: T | undefined | null) => (value === undefined ? null : value);
+
       const query = `INSERT INTO tests (
           id, paciente_id, paciente_nombreCompleto, paciente_edad, paciente_altura,
           paciente_peso, paciente_sexo, paciente_raza, medicoResponsable, fecha,
@@ -215,12 +217,27 @@ export class Database {
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
       
       await connection.execute(query as any, [
-        test.id, test.paciente.id, test.paciente.nombreCompleto, test.paciente.edad,
-        test.paciente.altura, test.paciente.peso, test.paciente.sexo, test.paciente.raza,
-        test.medicoResponsable, test.fecha, test.numeroCaminata ?? null, test.fechaCaminata,
-        test.enfermedadPulmonar, test.presionSanguineaInicial ?? null, test.oxigenoSupplementario,
-        test.estado, test.duracion, test.distanciaTotal, test.fcPromedio,
-        test.spo2Promedio, test.observaciones,
+        test.id,
+        safe(test.paciente.id),
+        safe(test.paciente.nombreCompleto),
+        safe(test.paciente.edad),
+        safe(test.paciente.altura),
+        safe(test.paciente.peso),
+        safe(test.paciente.sexo),
+        safe(test.paciente.raza),
+        safe(test.medicoResponsable),
+        safe(test.fecha),
+        safe(test.numeroCaminata),
+        safe(test.fechaCaminata),
+        safe(test.enfermedadPulmonar),
+        safe(test.presionSanguineaInicial),
+        safe(test.oxigenoSupplementario),
+        safe(test.estado),
+        safe(test.duracion),
+        safe(test.distanciaTotal),
+        safe(test.fcPromedio),
+        safe(test.spo2Promedio),
+        safe(test.observaciones),
       ] as any);
       return test;
     } finally {
