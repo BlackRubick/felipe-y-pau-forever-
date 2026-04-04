@@ -25,18 +25,23 @@ const MiniLineChart: React.FC<{
   title: string;
   colorClass: string;
   stroke: string;
+  glow: string;
+  areaStart: string;
+  areaEnd: string;
   data: LineChartPoint[];
   unit: string;
-}> = ({ title, colorClass, stroke, data, unit }) => {
+}> = ({ title, colorClass, stroke, glow, areaStart, areaEnd, data, unit }) => {
   const width = 900;
   const height = 220;
   const padding = 28;
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const chartId = title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
   if (!data.length) {
     return (
-      <div className={`rounded-lg p-6 ${colorClass}`}>
-        <h3 className="text-xl font-bold text-gray-900 mb-3">{title}</h3>
-        <div className="h-48 bg-white rounded flex items-center justify-center text-gray-500">
+      <div className={`rounded-2xl p-5 shadow-lg ${colorClass}`}>
+        <h3 className="text-xl font-bold text-slate-900 mb-3">{title}</h3>
+        <div className="h-48 rounded-xl border border-white/60 bg-white/70 backdrop-blur flex items-center justify-center text-slate-500">
           Esperando lecturas...
         </div>
       </div>
@@ -64,32 +69,127 @@ const MiniLineChart: React.FC<{
 
   const points = data.map((p) => `${toSvgX(p.x)},${toSvgY(p.y)}`).join(' ');
   const last = data[data.length - 1];
+  const areaPath = `${points} ${toSvgX(data[data.length - 1].x)},${height - padding} ${toSvgX(data[0].x)},${height - padding}`;
+  const gridLines = 4;
+  const hoveredPoint = hoveredIndex !== null ? data[hoveredIndex] : null;
+
+  const onMouseMove = (e: React.MouseEvent<SVGRectElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const ratio = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+    const index = Math.min(data.length - 1, Math.max(0, Math.round(ratio * (data.length - 1))));
+    setHoveredIndex(index);
+  };
 
   return (
-    <div className={`rounded-lg p-6 ${colorClass}`}>
+    <div className={`rounded-2xl p-5 shadow-lg ring-1 ring-black/5 ${colorClass}`}>
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-xl font-bold text-gray-900">{title}</h3>
-        <span className="text-sm font-semibold text-gray-700">
+        <h3 className="text-xl font-bold text-slate-900">{title}</h3>
+        <span className="text-sm font-semibold text-slate-700">
           Último: {last.y} {unit}
         </span>
       </div>
 
-      <div className="bg-white rounded p-2">
-        <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-48">
-          <line x1={padding} y1={padding} x2={padding} y2={height - padding} stroke="#cbd5e1" strokeWidth="1" />
+      <div className="rounded-xl border border-white/70 bg-white/75 backdrop-blur p-2">
+        <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-52">
+          <defs>
+            <linearGradient id={`area-${chartId}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={areaStart} stopOpacity="0.65" />
+              <stop offset="100%" stopColor={areaEnd} stopOpacity="0.04" />
+            </linearGradient>
+            <filter id={`glow-${chartId}`} x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="2.4" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+
+          {Array.from({ length: gridLines + 1 }).map((_, i) => {
+            const y = padding + (i * (height - padding * 2)) / gridLines;
+            return (
+              <line
+                key={`grid-${i}`}
+                x1={padding}
+                y1={y}
+                x2={width - padding}
+                y2={y}
+                stroke="#cbd5e1"
+                strokeWidth="1"
+                strokeDasharray="4 6"
+                opacity="0.45"
+              />
+            );
+          })}
+
+          <line x1={padding} y1={padding} x2={padding} y2={height - padding} stroke="#94a3b8" strokeWidth="1" />
           <line
             x1={padding}
             y1={height - padding}
             x2={width - padding}
             y2={height - padding}
-            stroke="#cbd5e1"
+            stroke="#94a3b8"
             strokeWidth="1"
           />
 
-          <polyline fill="none" stroke={stroke} strokeWidth="3" points={points} strokeLinejoin="round" strokeLinecap="round" />
+          <polygon points={areaPath} fill={`url(#area-${chartId})`} />
+
+          <polyline
+            fill="none"
+            stroke={glow}
+            strokeWidth="6"
+            points={points}
+            strokeLinejoin="round"
+            strokeLinecap="round"
+            opacity="0.35"
+          />
+          <polyline
+            fill="none"
+            stroke={stroke}
+            strokeWidth="3"
+            points={points}
+            strokeLinejoin="round"
+            strokeLinecap="round"
+            filter={`url(#glow-${chartId})`}
+          />
+
+          {hoveredPoint && (
+            <>
+              <line
+                x1={toSvgX(hoveredPoint.x)}
+                y1={padding}
+                x2={toSvgX(hoveredPoint.x)}
+                y2={height - padding}
+                stroke={stroke}
+                strokeDasharray="3 4"
+                strokeWidth="1"
+                opacity="0.7"
+              />
+              <circle cx={toSvgX(hoveredPoint.x)} cy={toSvgY(hoveredPoint.y)} r="5.5" fill={stroke} />
+              <circle cx={toSvgX(hoveredPoint.x)} cy={toSvgY(hoveredPoint.y)} r="2.5" fill="#fff" />
+            </>
+          )}
+
+          <rect
+            x={padding}
+            y={padding}
+            width={width - padding * 2}
+            height={height - padding * 2}
+            fill="transparent"
+            onMouseMove={onMouseMove}
+            onMouseLeave={() => setHoveredIndex(null)}
+          />
 
           <circle cx={toSvgX(last.x)} cy={toSvgY(last.y)} r="4" fill={stroke} />
         </svg>
+
+        <div className="mt-2 flex items-center justify-between text-xs text-slate-600 px-1">
+          <span>Mín: {Math.round(yMinRaw)} {unit}</span>
+          <span>
+            {hoveredPoint ? `Muestra ${hoveredIndex! + 1}: ${hoveredPoint.y} ${unit}` : `Total: ${data.length} muestras`}
+          </span>
+          <span>Máx: {Math.round(yMaxRaw)} {unit}</span>
+        </div>
       </div>
     </div>
   );
@@ -619,24 +719,33 @@ export const ReportesPage: React.FC = () => {
 
             <MiniLineChart
               title="Evolución de Frecuencia Cardíaca"
-              colorClass="bg-slate-50 border border-slate-200"
-              stroke="#0f172a"
+              colorClass="bg-gradient-to-br from-rose-50 via-white to-orange-50 border border-rose-100"
+              stroke="#b91c1c"
+              glow="#fb7185"
+              areaStart="#fda4af"
+              areaEnd="#fff1f2"
               data={chartSeries.fc}
               unit="BPM"
             />
 
             <MiniLineChart
               title="Evolución de SpO₂"
-              colorClass="bg-slate-50 border border-slate-200"
-              stroke="#334155"
+              colorClass="bg-gradient-to-br from-cyan-50 via-white to-sky-50 border border-cyan-100"
+              stroke="#0369a1"
+              glow="#22d3ee"
+              areaStart="#7dd3fc"
+              areaEnd="#ecfeff"
               data={chartSeries.spo2}
               unit="%"
             />
 
             <MiniLineChart
               title="Distancia Acumulada"
-              colorClass="bg-slate-50 border border-slate-200"
-              stroke="#475569"
+              colorClass="bg-gradient-to-br from-emerald-50 via-white to-lime-50 border border-emerald-100"
+              stroke="#047857"
+              glow="#34d399"
+              areaStart="#6ee7b7"
+              areaEnd="#ecfdf5"
               data={chartSeries.distancia}
               unit="m"
             />

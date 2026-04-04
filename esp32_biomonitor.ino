@@ -32,8 +32,15 @@ float ultimoBpmValido = 0;
 const byte Tamano_Tasa = 4;
 byte rates[Tamano_Tasa] = {0};
 byte Tasa_Spot = 0;
+byte cantidadRatesValidos = 0;
+float sumaRatesValidos = 0;
 long Latido_Anterior = 0;
 float bpm_raw = 0;
+float irDC = 0;
+float irACProm = 0;
+long irPrev = 0;
+long irPrevPrev = 0;
+bool irHistoriaIniciada = false;
 
 #define Ventana_Muestra 100
 uint32_t redBuffer[Ventana_Muestra];
@@ -73,7 +80,7 @@ unsigned long lastTestSync = 0;
 
 #define DISPLAY_INTERVAL          500
 #define JSON_INTERVAL             1000
-#define ENVIO_SERVIDOR_INTERVAL   100
+#define ENVIO_SERVIDOR_INTERVAL   300
 #define ACTUALIZAR_TEST_INTERVAL  3000
 #define WIFI_RETRY_INTERVAL       10000
 #define TEST_SYNC_INTERVAL        10000
@@ -105,9 +112,62 @@ bool  obtenerTestIdDesdeLista(String& outTestId);
 void  enviarLecturaServidor();
 void  actualizarTest();
 String normalizarTestId(const String& input);
+void  registrarLatido(unsigned long ahoraLatido, const char* fuente);
 
 bool  prepararHttp(HTTPClient& http, const String& url);
 void  logHttpError(HTTPClient& http, int code, const char* contexto);
+int   obtenerBpmActual();
+
+void registrarLatido(unsigned long ahoraLatido, const char* fuente) {
+  if (Latido_Anterior == 0) {
+    Latido_Anterior = ahoraLatido;
+    return;
+  }
+
+  long delta = ahoraLatido - Latido_Anterior;
+
+  // Delta demasiado largo: reiniciar referencia para no arrastrar BPM a 0.
+  if (delta > 2000) {
+    Latido_Anterior = ahoraLatido;
+    return;
+  }
+
+  // Delta demasiado corto: ruido o doble pico.
+  if (delta < 300) {
+    return;
+  }
+
+  Latido_Anterior = ahoraLatido;
+  bpm_raw = 60.0f / (delta / 1000.0f);
+
+  if (bpm_raw >= 30 && bpm_raw <= 220) {
+    ultimoBpmValido = bpm_raw;
+
+    if (cantidadRatesValidos < Tamano_Tasa) {
+      cantidadRatesValidos++;
+    } else {
+      sumaRatesValidos -= rates[Tasa_Spot];
+    }
+
+    rates[Tasa_Spot] = (byte)bpm_raw;
+    sumaRatesValidos += rates[Tasa_Spot];
+    Tasa_Spot++;
+    Tasa_Spot %= Tamano_Tasa;
+
+    if (cantidadRatesValidos > 0) {
+      Latidos_Promedio = sumaRatesValidos / cantidadRatesValidos;
+    }
+
+    Serial.print("Beat ");
+    Serial.print(fuente);
+    Serial.print(" | delta=");
+    Serial.print(delta);
+    Serial.print("ms bpmRaw=");
+    Serial.print(bpm_raw, 1);
+    Serial.print(" bpmAvg=");
+    Serial.println(Latidos_Promedio, 1);
+  }
+}
 
 String normalizarTestId(const String& input) {
   String id = input;
@@ -129,6 +189,22 @@ String normalizarTestId(const String& input) {
 
   id.trim();
   return id;
+}
+
+int obtenerBpmActual() {
+  if (Latidos_Promedio >= 30 && Latidos_Promedio <= 220) {
+    return (int)Latidos_Promedio;
+  }
+
+  if (bpm_raw >= 30 && bpm_raw <= 220) {
+    return (int)bpm_raw;
+  }
+
+  if (ultimoBpmValido >= 30 && ultimoBpmValido <= 220) {
+    return (int)ultimoBpmValido;
+  }
+
+  return 0;
 }
 
 // =======================================================
@@ -187,31 +263,52 @@ void loop() {
 
   long Valor_IR   = SensorMax30102.getIR();
   long Valor_Rojo = SensorMax30102.getRed();
-  hayDedo = (Valor_Rojo > 40000);
+  hayDedo = (Valor_IR > 20000);
+
+  if (!hayDedo) {
+    Latido_Anterior = 0;
+    irHistoriaIniciada = false;
+  }
+
+  if (irDC <= 0) {
+    irDC = Valor_IR;
+  }
+  irDC = 0.95f * irDC + 0.05f * Valor_IR;
+  float irAC = fabs((float)Valor_IR - irDC);
+  irACProm = 0.90f * irACProm + 0.10f * irAC;
 
   redBuffer[Bandera_Muestra] = Valor_Rojo;
   irBuffer[Bandera_Muestra]  = Valor_IR;
   Bandera_Muestra++;
 
-  if (checkForBeat(Valor_Rojo)) {
-    long delta = millis() - Latido_Anterior;
-    Latido_Anterior = millis();
+  bool latidoDetectado = false;
 
-    if (delta > 0) {
-      bpm_raw = 60.0f / (delta / 1000.0f);
+  // Detector principal de libreria
+  if (hayDedo && checkForBeat(Valor_IR)) {
+    registrarLatido(millis(), "IR-lib");
+    latidoDetectado = true;
+  }
 
-      if (bpm_raw > 20 && bpm_raw < 255) {
-        ultimoBpmValido = bpm_raw;
-        rates[Tasa_Spot++] = (byte)bpm_raw;
-        Tasa_Spot %= Tamano_Tasa;
+  // Detector de respaldo por pico local en la senal IR (AC)
+  if (!latidoDetectado && hayDedo && irHistoriaIniciada) {
+    float umbralPico = irACProm * 1.6f;
+    if (umbralPico < 120.0f) umbralPico = 120.0f;
 
-        Latidos_Promedio = 0;
-        for (byte x = 0; x < Tamano_Tasa; x++) {
-          Latidos_Promedio += rates[x];
-        }
-        Latidos_Promedio /= Tamano_Tasa;
-      }
+    bool picoLocal = (irPrev > irPrevPrev) && (irPrev > Valor_IR);
+    float alturaPico = (float)irPrev - irDC;
+
+    if (picoLocal && alturaPico > umbralPico) {
+      registrarLatido(millis(), "IR-fb");
     }
+  }
+
+  if (!irHistoriaIniciada) {
+    irPrevPrev = Valor_IR;
+    irPrev = Valor_IR;
+    irHistoriaIniciada = true;
+  } else {
+    irPrevPrev = irPrev;
+    irPrev = Valor_IR;
   }
 
   if (Bandera_Muestra >= Ventana_Muestra) {
@@ -475,15 +572,7 @@ void enviarLecturaServidor() {
   unsigned long elapsedSec = (millis() - tiempoInicioTest) / 1000;
 
   int bpmEnviar = 0;
-  if (hayDedo) {
-    if (Latidos_Promedio > 0) {
-      bpmEnviar = (int)Latidos_Promedio;
-    } else if (bpm_raw > 20 && bpm_raw < 255) {
-      bpmEnviar = (int)bpm_raw;
-    } else if (ultimoBpmValido > 20 && ultimoBpmValido < 255) {
-      bpmEnviar = (int)ultimoBpmValido;
-    }
-  }
+  bpmEnviar = obtenerBpmActual();
 
   DynamicJsonDocument doc(256);
   doc["frecuenciaCardiaca"] = bpmEnviar;
@@ -517,13 +606,7 @@ void actualizarTest() {
   unsigned long duracionSec = (millis() - tiempoInicioTest) / 1000;
 
   int bpmPromedioEnviar = 0;
-  if (hayDedo) {
-    if (Latidos_Promedio > 0) {
-      bpmPromedioEnviar = (int)Latidos_Promedio;
-    } else if (ultimoBpmValido > 20 && ultimoBpmValido < 255) {
-      bpmPromedioEnviar = (int)ultimoBpmValido;
-    }
-  }
+  bpmPromedioEnviar = obtenerBpmActual();
 
   DynamicJsonDocument doc(256);
   doc["duracion"]     = duracionSec;
@@ -548,16 +631,7 @@ void actualizarTest() {
 
 // =======================================================
 void enviarJSON() {
-  int bpmEnviar = 0;
-  if (hayDedo) {
-    if (Latidos_Promedio > 0) {
-      bpmEnviar = (int)Latidos_Promedio;
-    } else if (bpm_raw > 20 && bpm_raw < 255) {
-      bpmEnviar = (int)bpm_raw;
-    } else if (ultimoBpmValido > 20 && ultimoBpmValido < 255) {
-      bpmEnviar = (int)ultimoBpmValido;
-    }
-  }
+  int bpmEnviar = obtenerBpmActual();
 
   Serial.print("{");
   Serial.print("\"device_id\":\""); Serial.print(DEVICE_ID); Serial.print("\",");
@@ -622,10 +696,12 @@ float calcularSpO2(uint32_t *red, uint32_t *ir, int length) {
   if (avgRedDC <= 0 || avgIrDC <= 0 || sumIrAC <= 0) return 0;
 
   double R = (sumRedAC / avgRedDC) / (sumIrAC / avgIrDC);
-  float SpO2 = 110.0f - 25.0f * R;
+  // Ajuste empírico para que la lectura no se quede pegada cerca de 99
+  // con este sensor/montaje. No es una calibracion clínica.
+  float SpO2 = 104.0f - 20.0f * R;
 
   if (SpO2 > 100) SpO2 = 100;
-  if (SpO2 < 0)   SpO2 = 0;
+  if (SpO2 < 80)  SpO2 = 80;
   return SpO2;
 }
 
@@ -641,17 +717,17 @@ void pantallaMonitor() {
 
   int bpmPantalla = 0;
   if (hayDedo) {
-    if (Latidos_Promedio > 0) {
+    if (Latidos_Promedio >= 30 && Latidos_Promedio <= 220) {
       bpmPantalla = (int)Latidos_Promedio;
-    } else if (bpm_raw > 20 && bpm_raw < 255) {
+    } else if (bpm_raw >= 30 && bpm_raw <= 220) {
       bpmPantalla = (int)bpm_raw;
-    } else if (ultimoBpmValido > 20 && ultimoBpmValido < 255) {
+    } else if (ultimoBpmValido >= 30 && ultimoBpmValido <= 220) {
       bpmPantalla = (int)ultimoBpmValido;
     }
   }
 
   display.setCursor(0, 14);
-  if (!hayDedo || bpmPantalla <= 0) {
+  if (bpmPantalla <= 0) {
     display.print("BPM: --  O2: --%");
   } else {
     display.print("BPM:"); display.print(bpmPantalla);
