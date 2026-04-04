@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, Button } from '../components/common';
+import { Card } from '../components/common';
 import testService from '../services/testService';
 import { Test } from '../types';
 
@@ -45,7 +45,6 @@ const toRecord = (test: Test): TestRecord => ({
 export const HistorialPage: React.FC = () => {
   const navigate = useNavigate();
   const [filtro, setFiltro] = useState('');
-  const [selectedTest, setSelectedTest] = useState<TestRecord | null>(null);
   const [tests, setTests] = useState<TestRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -56,7 +55,6 @@ export const HistorialPage: React.FC = () => {
         const apiTests = await testService.getAllTests();
         const mapped = apiTests.map(toRecord);
         setTests(mapped);
-        if (mapped.length > 0) setSelectedTest(mapped[0]);
       } finally {
         setIsLoading(false);
       }
@@ -93,11 +91,8 @@ export const HistorialPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        <div className="lg:col-span-2">
-          <Card className="border border-slate-200 shadow-lg rounded-2xl" padding="lg">
-            <div className="space-y-6">
+      <Card className="border border-slate-200 shadow-lg rounded-2xl" padding="lg">
+        <div className="space-y-6">
               
               <div>
                 <input
@@ -156,73 +151,9 @@ export const HistorialPage: React.FC = () => {
                   <p className="text-slate-600">No se encontraron pruebas</p>
                 </div>
               )}
-            </div>
-          </Card>
+          </div>
         </div>
-
-        
-        <div>
-          {selectedTest ? (
-            <Card className="border border-slate-200 shadow-lg rounded-2xl" padding="lg">
-              <div className="space-y-4">
-                <h2 className="text-xl font-bold text-slate-900">Detalles de la Prueba</h2>
-
-                <div className="space-y-3 text-sm">
-                  <div>
-                    <p className="text-slate-600">Paciente</p>
-                    <p className="font-semibold text-slate-900">{selectedTest.paciente}</p>
-                  </div>
-
-                  <div>
-                    <p className="text-slate-600">Edad</p>
-                    <p className="font-semibold text-slate-900">{selectedTest.edad} años</p>
-                  </div>
-
-                  <div>
-                    <p className="text-slate-600">Enfermedad Pulmonar</p>
-                    <p className="font-semibold text-slate-900">{selectedTest.enfermedad}</p>
-                  </div>
-
-                  <div className="border-t border-slate-200 pt-3">
-                    <p className="text-slate-600">FC Promedio</p>
-                    <p className="font-semibold text-slate-900">{selectedTest.fcPromedio} BPM</p>
-                  </div>
-
-                  <div>
-                    <p className="text-slate-600">SpO₂ Promedio</p>
-                    <p className="font-semibold text-slate-900">{selectedTest.spo2Promedio}%</p>
-                  </div>
-
-                  <div>
-                    <p className="text-slate-600">Distancia Recorrida</p>
-                    <p className="font-semibold text-slate-900">{selectedTest.distancia} metros</p>
-                  </div>
-
-                  <div>
-                    <p className="text-slate-600">Duración</p>
-                    <p className="font-semibold text-slate-900">{selectedTest.duracion}</p>
-                  </div>
-                </div>
-
-                <div className="border-t border-slate-200 pt-4 space-y-2">
-                  <Button variant="primary" className="!bg-slate-900 hover:!bg-slate-800" fullWidth onClick={() => navigate(`/reportes?testId=${selectedTest.id}`)}>
-                    Ver Reporte
-                  </Button>
-                  <Button variant="outline" fullWidth>
-                    Descargar PDF
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          ) : (
-            <Card className="border border-slate-200 shadow-lg rounded-2xl" padding="lg">
-              <div className="text-center py-8">
-                <p className="text-slate-600">Selecciona una prueba para ver detalles</p>
-              </div>
-            </Card>
-          )}
-        </div>
-      </div>
+      </Card>
       {isLoading && <div className="text-center py-4 text-slate-600">Cargando historial...</div>}
     </div>
   );
