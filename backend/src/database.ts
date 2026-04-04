@@ -332,8 +332,71 @@ export class Database {
   async updateTest(id: string, updates: Partial<Test>): Promise<Test | undefined> {
     const connection = await pool.getConnection();
     try {
+      const currentTest = await this.getTestById(id);
+      if (!currentTest) return undefined;
+
+      const resolvedPatient = updates.paciente
+        ? {
+            ...currentTest.paciente,
+            ...updates.paciente,
+          }
+        : currentTest.paciente;
+
       const setClauses: string[] = [];
       const values: any[] = [];
+
+      if (updates.paciente) {
+        setClauses.push('paciente_id = ?');
+        values.push(resolvedPatient.id ?? null);
+
+        setClauses.push('paciente_nombreCompleto = ?');
+        values.push(resolvedPatient.nombreCompleto ?? null);
+
+        setClauses.push('paciente_edad = ?');
+        values.push(resolvedPatient.edad ?? null);
+
+        setClauses.push('paciente_altura = ?');
+        values.push(resolvedPatient.altura ?? null);
+
+        setClauses.push('paciente_peso = ?');
+        values.push(resolvedPatient.peso ?? null);
+
+        setClauses.push('paciente_sexo = ?');
+        values.push(resolvedPatient.sexo ?? null);
+
+        setClauses.push('paciente_raza = ?');
+        values.push(resolvedPatient.raza ?? null);
+      }
+
+      if (updates.medicoResponsable !== undefined) {
+        setClauses.push('medicoResponsable = ?');
+        values.push(updates.medicoResponsable);
+      }
+
+      if (updates.enfermedadPulmonar !== undefined) {
+        setClauses.push('enfermedadPulmonar = ?');
+        values.push(updates.enfermedadPulmonar);
+      }
+
+      if (updates.numeroCaminata !== undefined) {
+        setClauses.push('numeroCaminata = ?');
+        values.push(updates.numeroCaminata);
+      }
+
+      if (updates.fechaCaminata !== undefined) {
+        setClauses.push('fechaCaminata = ?');
+        values.push(updates.fechaCaminata);
+      }
+
+      if (updates.presionSanguineaInicial !== undefined) {
+        setClauses.push('presionSanguineaInicial = ?');
+        values.push(updates.presionSanguineaInicial);
+      }
+
+      if (updates.oxigenoSupplementario !== undefined) {
+        setClauses.push('oxigenoSupplementario = ?');
+        values.push(updates.oxigenoSupplementario);
+      }
 
       if (updates.estado) {
         setClauses.push('estado = ?');

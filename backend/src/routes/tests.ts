@@ -225,10 +225,30 @@ router.post('/:id/alerts', async (req, res: Response) => {
 
 router.put('/:id', async (req, res: Response) => {
   try {
-    const { estado, duracion, distanciaTotal, fcPromedio, spo2Promedio, observaciones } =
-      req.body;
+    const {
+      paciente,
+      medicoResponsable,
+      enfermedadPulmonar,
+      numeroCaminata,
+      fechaCaminata,
+      presionSanguineaInicial,
+      oxigenoSupplementario,
+      estado,
+      duracion,
+      distanciaTotal,
+      fcPromedio,
+      spo2Promedio,
+      observaciones,
+    } = req.body;
 
     const updated = await db.updateTest(req.params.id, {
+      paciente,
+      medicoResponsable,
+      enfermedadPulmonar,
+      numeroCaminata,
+      fechaCaminata,
+      presionSanguineaInicial,
+      oxigenoSupplementario,
       estado,
       duracion,
       distanciaTotal,

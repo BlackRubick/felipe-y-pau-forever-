@@ -1,5 +1,5 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useRef } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import { useAuth } from '../context/AuthContext';
 import { useTest } from '../context/TestContext';
@@ -12,10 +12,37 @@ import { SURGERY_TYPE_LABELS, TEST_DURATION_SECONDS } from '../constants';
 
 export const NewTestPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const { createTest, isLoading } = useTest();
+  const appliedPrefillRef = useRef(false);
 
-  const { values, errors, touched, handleChange, handleBlur, resetForm } =
+  type PrefillPatientData = {
+    pacienteId?: string;
+    nombreCompleto?: string;
+    edad?: number;
+    altura?: number;
+    sexo?: 'M' | 'F' | 'O';
+    raza?: string;
+    peso?: number;
+    tipoCirugia?: string;
+  };
+
+  const prefillPatient = ((location.state as { prefillPatient?: PrefillPatientData } | null)?.prefillPatient) || null;
+
+  const buildPatientId = () => {
+    const explicitId = values.idPaciente?.trim();
+    if (explicitId) {
+      return explicitId;
+    }
+
+    const normalizedName = values.nombreCompleto.trim().toLowerCase().replace(/\s+/g, '-');
+    const normalizedSex = values.sexo.toLowerCase();
+    const normalizedRaza = (values.raza || 'sin-raza').trim().toLowerCase().replace(/\s+/g, '-');
+    return `patient-${normalizedName}-${values.edad}-${values.altura}-${normalizedSex}-${normalizedRaza}`;
+  };
+
+  const { values, errors, touched, handleChange, handleBlur, resetForm, setFieldValue } =
     useForm<PatientFormData>({
       nombreCompleto: '',
       idPaciente: '',
@@ -32,6 +59,21 @@ export const NewTestPage: React.FC = () => {
       fechaOperacion: new Date().toISOString().split('T')[0],
       observacionesPrevias: '',
     });
+
+  useEffect(() => {
+    if (!prefillPatient || appliedPrefillRef.current) return;
+
+    if (prefillPatient.pacienteId) setFieldValue('idPaciente', prefillPatient.pacienteId);
+    if (prefillPatient.nombreCompleto) setFieldValue('nombreCompleto', prefillPatient.nombreCompleto);
+    if (typeof prefillPatient.edad === 'number') setFieldValue('edad', prefillPatient.edad);
+    if (typeof prefillPatient.altura === 'number') setFieldValue('altura', prefillPatient.altura);
+    if (typeof prefillPatient.peso === 'number' && prefillPatient.peso > 0) setFieldValue('peso', prefillPatient.peso);
+    if (prefillPatient.sexo) setFieldValue('sexo', prefillPatient.sexo);
+    if (typeof prefillPatient.raza === 'string') setFieldValue('raza', prefillPatient.raza);
+    if (prefillPatient.tipoCirugia) setFieldValue('tipoCirugia', prefillPatient.tipoCirugia as TipoEnfermedadPulmonar);
+
+    appliedPrefillRef.current = true;
+  }, [prefillPatient, setFieldValue]);
 
 
     
@@ -99,7 +141,7 @@ export const NewTestPage: React.FC = () => {
 
     try {
       const config: TestConfig = {
-        pacienteId: `patient-${Date.now()}`,
+        pacienteId: buildPatientId(),
         idPaciente: values.idPaciente || undefined,
         pacienteNombre: values.nombreCompleto,
         pacienteEdad: values.edad,
