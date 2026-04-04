@@ -46,85 +46,101 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <div className="space-y-6">
-          
-          <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Monitor Clínico 6MWT
-            </h1>
-            <p className="text-gray-600">Prueba de Caminata de 6 Minutos</p>
-          </div>
-
-          
-          {localError && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-              {localError}
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 sm:p-6">
+      <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 rounded-2xl overflow-hidden shadow-2xl border border-slate-800">
+        <section className="relative bg-slate-900 text-slate-100 p-8 sm:p-10 lg:p-14">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(148,163,184,0.12),transparent_40%),radial-gradient(circle_at_80%_30%,rgba(30,41,59,0.55),transparent_45%)]" />
+          <div className="relative z-10 space-y-10">
+            <div>
+              <p className="text-xs tracking-[0.25em] uppercase text-slate-400 mb-4">
+                Plataforma Clínica
+              </p>
+              <h1 className="text-3xl sm:text-4xl font-bold leading-tight text-white">
+                Monitor Clínico 6MWT
+              </h1>
+              <p className="mt-4 text-slate-300 max-w-md">
+                Gestión centralizada de pruebas de caminata, seguimiento en tiempo real y evaluación clínica.
+              </p>
             </div>
-          )}
 
-          
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
-              label="Email"
-              type="email"
-              name="email"
-              value={values.email}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              placeholder="tu@email.com"
-              error={touched.email && errors.email ? 'Email inválido' : undefined}
-            />
-
-            <Input
-              label="Contraseña"
-              type="password"
-              name="password"
-              value={values.password}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              placeholder="••••••••"
-              error={touched.password && errors.password ? 'Requerido' : undefined}
-            />
-
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                name="recuerdame"
-                checked={values.recuerdame || false}
-                onChange={handleChange}
-                className="rounded border-gray-300"
-              />
-              <span className="text-sm text-gray-700">Recuérdame</span>
-            </label>
-
-            <Button
-              type="submit"
-              variant="primary"
-              fullWidth
-              isLoading={isLoading}
-            >
-              Iniciar Sesión
-            </Button>
-          </form>
-
-          
-          <div className="space-y-2 text-center text-sm">
-            <p>
-              <Link to="/forgot-password" className="text-blue-600 hover:underline">
-                ¿Olvidaste tu contraseña?
-              </Link>
-            </p>
-            <p className="text-gray-600">
-              ¿No tienes cuenta?{' '}
-              <Link to="/register" className="text-blue-600 hover:underline font-semibold">
-                Regístrate
-              </Link>
-            </p>
+            <div className="space-y-4">
+              <div className="rounded-xl border border-slate-700/70 bg-slate-800/50 p-4">
+                <p className="text-sm text-slate-200 font-medium">Acceso Seguro</p>
+                <p className="text-sm text-slate-400 mt-1">Sesión cifrada con control de autenticación clínica.</p>
+              </div>
+              <div className="rounded-xl border border-slate-700/70 bg-slate-800/50 p-4">
+                <p className="text-sm text-slate-200 font-medium">Monitoreo Continuo</p>
+                <p className="text-sm text-slate-400 mt-1">Visualización de métricas cardiorrespiratorias y evolución de la prueba.</p>
+              </div>
+            </div>
           </div>
-        </div>
-      </Card>
+        </section>
+
+        <section className="bg-white p-8 sm:p-10 lg:p-14">
+          <Card className="w-full shadow-none border border-slate-200" padding="lg">
+            <div className="space-y-7">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900">Iniciar sesión</h2>
+                <p className="text-slate-500 text-sm mt-2">Ingresa con tus credenciales profesionales.</p>
+              </div>
+
+              {localError && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                  {localError}
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <Input
+                  label="Email"
+                  type="email"
+                  name="email"
+                  value={values.email}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  placeholder="tu@email.com"
+                  error={touched.email && errors.email ? 'Email inválido' : undefined}
+                  className="h-11 border-slate-300 focus:ring-slate-800"
+                />
+
+                <Input
+                  label="Contraseña"
+                  type="password"
+                  name="password"
+                  value={values.password}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  placeholder="••••••••"
+                  error={touched.password && errors.password ? 'Requerido' : undefined}
+                  className="h-11 border-slate-300 focus:ring-slate-800"
+                />
+
+                <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    name="recuerdame"
+                    checked={values.recuerdame || false}
+                    onChange={handleChange}
+                    className="rounded border-slate-300 text-slate-900 focus:ring-slate-800"
+                  />
+                  <span className="text-sm text-slate-700">Recuérdame</span>
+                </label>
+
+                <Button
+                  type="submit"
+                  variant="primary"
+                  fullWidth
+                  isLoading={isLoading}
+                  className="!bg-slate-900 hover:!bg-slate-800"
+                >
+                  Iniciar Sesión
+                </Button>
+              </form>
+
+            </div>
+          </Card>
+        </section>
+      </div>
     </div>
   );
 };
