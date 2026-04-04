@@ -72,7 +72,7 @@ unsigned long lastTestSync = 0;
 
 #define DISPLAY_INTERVAL          500
 #define JSON_INTERVAL             1000
-#define ENVIO_SERVIDOR_INTERVAL   1000
+#define ENVIO_SERVIDOR_INTERVAL   100
 #define ACTUALIZAR_TEST_INTERVAL  3000
 #define WIFI_RETRY_INTERVAL       10000
 #define TEST_SYNC_INTERVAL        10000
