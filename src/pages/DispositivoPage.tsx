@@ -130,72 +130,76 @@ export const DispositivoPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Gestión de Dispositivo</h1>
+    <div className="min-h-screen bg-slate-100 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-3xl mx-auto space-y-6">
+        <div className="rounded-2xl bg-slate-900 text-white p-6 sm:p-8 shadow-xl border border-slate-800">
+          <p className="text-xs uppercase tracking-[0.22em] text-slate-400 mb-3">Conectividad</p>
+          <h1 className="text-3xl font-bold mb-2">Gestión de Dispositivo</h1>
+          <p className="text-slate-300">Administra la conexión y estado operativo del equipo biométrico.</p>
+        </div>
 
         
-        <Card className="mb-6">
-          <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-6 rounded-lg mb-4">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Estado de Conexión</h2>
+        <Card className="border border-slate-200 shadow-lg rounded-2xl" padding="lg">
+          <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 mb-4">
+            <h2 className="text-xl font-bold text-slate-900 mb-4">Estado de Conexión</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-gray-600 mb-1">Estado</p>
+                <p className="text-sm text-slate-600 mb-1">Estado</p>
                 <div className="flex items-center gap-2">
                   <div
                     className={`w-3 h-3 rounded-full ${
                       device.isConnected ? 'bg-green-500' : 'bg-red-500'
                     }`}
                   ></div>
-                  <span className="text-lg font-semibold text-gray-900">
+                  <span className="text-lg font-semibold text-slate-900">
                     {device.isConnected ? 'Conectado' : 'Desconectado'}
                   </span>
                 </div>
               </div>
 
               <div>
-                <p className="text-sm text-gray-600 mb-1">IP del Dispositivo</p>
-                <p className="text-lg font-semibold text-gray-900">
+                <p className="text-sm text-slate-600 mb-1">IP del Dispositivo</p>
+                <p className="text-lg font-semibold text-slate-900">
                   {device.isConnected ? device.ip : 'N/A'}
                 </p>
               </div>
 
               <div>
-                <p className="text-sm text-gray-600 mb-1">Latencia</p>
-                <p className="text-lg font-semibold text-gray-900">
+                <p className="text-sm text-slate-600 mb-1">Latencia</p>
+                <p className="text-lg font-semibold text-slate-900">
                   {device.isConnected ? `${device.latency}ms` : 'N/A'}
                 </p>
               </div>
 
               <div>
-                <p className="text-sm text-gray-600 mb-1">Calidad de Señal</p>
+                <p className="text-sm text-slate-600 mb-1">Calidad de Señal</p>
                 <div className="flex items-center gap-2">
-                  <div className="w-24 bg-gray-200 rounded-full h-2">
+                  <div className="w-24 bg-slate-200 rounded-full h-2">
                     <div
-                      className="bg-blue-600 h-2 rounded-full transition-all"
+                      className="bg-slate-700 h-2 rounded-full transition-all"
                       style={{ width: `${device.signalQuality}%` }}
                     ></div>
                   </div>
-                  <span className="text-sm font-semibold text-gray-900">
+                  <span className="text-sm font-semibold text-slate-900">
                     {device.signalQuality}%
                   </span>
                 </div>
               </div>
             </div>
 
-            <p className="text-xs text-gray-500 mt-4">
+            <p className="text-xs text-slate-500 mt-4">
               Última comunicación: {new Date(device.lastMessage).toLocaleTimeString()}
             </p>
           </div>
         </Card>
 
         
-        <Card className="mb-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Configuración de Conexión</h2>
+        <Card className="border border-slate-200 shadow-lg rounded-2xl" padding="lg">
+          <h2 className="text-xl font-bold text-slate-900 mb-6">Configuración de Conexión</h2>
 
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-slate-700 mb-2">
               Dirección IP del Dispositivo
             </label>
             <Input
@@ -212,14 +216,14 @@ export const DispositivoPage: React.FC = () => {
                 <Button
                   onClick={handleConnect}
                   disabled={isConnecting}
-                  className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                  className="flex-1 !bg-slate-900 hover:!bg-slate-800 text-white"
                 >
                   {isConnecting ? 'Conectando...' : 'Conectar'}
                 </Button>
               ) : (
                 <Button
                   onClick={handleDisconnect}
-                  className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                  className="flex-1 !bg-slate-700 hover:!bg-slate-600 text-white"
                 >
                   Desconectar
                 </Button>
@@ -230,14 +234,14 @@ export const DispositivoPage: React.FC = () => {
 
         
         {device.isConnected && (
-          <Card>
-            <h2 className="text-xl font-bold text-gray-900 mb-6">Acciones del Dispositivo</h2>
+          <Card className="border border-slate-200 shadow-lg rounded-2xl" padding="lg">
+            <h2 className="text-xl font-bold text-slate-900 mb-6">Acciones del Dispositivo</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Button
                 onClick={handleCalibrate}
                 disabled={isConnecting}
-                className="bg-purple-600 hover:bg-purple-700 text-white"
+                className="!bg-slate-900 hover:!bg-slate-800 text-white"
               >
                 {isConnecting ? 'Calibrando...' : 'Calibrar Dispositivo'}
               </Button>
@@ -245,14 +249,14 @@ export const DispositivoPage: React.FC = () => {
               <Button
                 onClick={handleTest}
                 disabled={isConnecting}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
+                className="!bg-slate-700 hover:!bg-slate-600 text-white"
               >
                 {isConnecting ? 'Probando...' : 'Prueba de Conexión'}
               </Button>
             </div>
 
-            <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-              <p className="text-sm text-blue-800">
+            <div className="mt-4 p-4 bg-slate-50 border border-slate-200 rounded-lg">
+              <p className="text-sm text-slate-700">
                 <strong>Consejo:</strong> Calibra el dispositivo antes de realizar cualquier
                 prueba para asegurar mediciones precisas.
               </p>

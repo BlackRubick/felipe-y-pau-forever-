@@ -140,25 +140,21 @@ export const NewTestPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
-      <div className="max-w-6xl mx-auto">
-        
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Nueva Prueba 6MWT</h1>
-          <p className="text-gray-600">
-            Bienvenido, {user?.nombre || 'Doctor'}. Inicia una nueva prueba de caminata.
+    <div className="min-h-screen bg-slate-100 p-4 sm:p-6 lg:p-8">
+      <div className="max-w-7xl mx-auto space-y-6">
+        <div className="rounded-2xl bg-slate-900 text-white p-6 sm:p-8 shadow-xl border border-slate-800">
+          <p className="text-xs uppercase tracking-[0.22em] text-slate-400 mb-3">Nueva evaluación</p>
+          <h1 className="text-3xl sm:text-4xl font-bold mb-2">Nueva Prueba 6MWT</h1>
+          <p className="text-slate-300">
+            Bienvenido, {user?.nombre || 'Doctor'}. Registra la información clínica para iniciar la caminata.
           </p>
         </div>
 
-        
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
           <div className="lg:col-span-2">
-            <Card>
+            <Card className="border border-slate-200 shadow-lg rounded-2xl" padding="lg">
               <form onSubmit={handleStartTest} className="space-y-6">
-                <h2 className="text-2xl font-bold text-gray-900">
-                  Información del Paciente
-                </h2>
+                <h2 className="text-2xl font-bold text-slate-900">Información del Paciente</h2>
 
                 <Input
                   label="Nombre Completo"
@@ -174,7 +170,7 @@ export const NewTestPage: React.FC = () => {
                   }
                 />
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
                     label="ID del Paciente (Opcional)"
                     name="idPaciente"
@@ -203,7 +199,7 @@ export const NewTestPage: React.FC = () => {
                   onBlur={handleBlur}
                 />
 
-                <div className="grid grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
                   <Input
                     label="Edad (años)"
                     type="number"
@@ -243,12 +239,12 @@ export const NewTestPage: React.FC = () => {
                     placeholder="Latina"
                   />
                   <div>
-                    <label className="form-label">Sexo</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Sexo</label>
                     <select
                       name="sexo"
                       value={values.sexo}
                       onChange={handleChange}
-                      className="form-input w-full"
+                      className="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-800"
                     >
                       <option value="M">Masculino</option>
                       <option value="F">Femenino</option>
@@ -257,7 +253,7 @@ export const NewTestPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
                     label="Presión Sanguínea Inicial (Ej: 120/80)"
                     name="presionSanguineaInicial"
@@ -267,12 +263,12 @@ export const NewTestPage: React.FC = () => {
                     placeholder="120/80 mmHg"
                   />
                   <div>
-                    <label className="form-label">Oxígeno Suplementario</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Oxígeno Suplementario</label>
                     <select
                       name="oxigenoSupplementario"
                       value={values.oxigenoSupplementario}
                       onChange={handleChange}
-                      className="form-input w-full"
+                      className="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-800"
                     >
                       <option value="No">No</option>
                       <option value="Si">Sí</option>
@@ -280,14 +276,14 @@ export const NewTestPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="form-label">Tipo de Enfermedad Pulmonar</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Tipo de Enfermedad Pulmonar</label>
                     <select
                       name="tipoCirugia"
                       value={values.tipoCirugia}
                       onChange={handleChange}
-                      className="form-input w-full"
+                      className="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-800"
                     >
                       {Object.entries(SURGERY_TYPE_LABELS).map(([key, label]) => (
                         <option key={key} value={key}>
@@ -308,15 +304,15 @@ export const NewTestPage: React.FC = () => {
                 </div>
 
                 {values.fechaOperacion && !dateError && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <p className="text-sm text-blue-900">
+                  <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
+                    <p className="text-sm text-slate-800">
                       <strong>Días post-operatorio:</strong> {daysPostOp} días
                     </p>
                   </div>
                 )}
 
                 <div>
-                  <label className="form-label">Observaciones Previas (opcional)</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Observaciones Previas (opcional)</label>
                   <textarea
                     name="observacionesPrevias"
                     value={values.observacionesPrevias}
@@ -324,35 +320,33 @@ export const NewTestPage: React.FC = () => {
                     onBlur={handleBlur}
                     placeholder="Ej: Paciente en buen estado general, sin síntomas previos..."
                     rows={4}
-                    className="form-input w-full"
+                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-800"
                   />
                 </div>
 
-                <Button type="submit" variant="primary" fullWidth>
+                <Button type="submit" variant="primary" fullWidth className="!bg-slate-900 hover:!bg-slate-800">
                   Iniciar Prueba
                 </Button>
               </form>
             </Card>
           </div>
 
-          
           <div className="space-y-6">
-            
-            <Card>
+            <Card className="border border-slate-200 shadow-lg rounded-2xl" padding="lg">
               <div className="space-y-4">
-                <h3 className="font-bold text-gray-900">Información Útil</h3>
+                <h3 className="font-bold text-slate-900">Información Útil</h3>
 
                 <div className="space-y-2 text-sm">
                   <div>
-                    <p className="font-semibold text-gray-700">Duración de Prueba</p>
-                    <p className="text-gray-600">
+                    <p className="font-semibold text-slate-700">Duración de Prueba</p>
+                    <p className="text-slate-600">
                       {TEST_DURATION_SECONDS / 60} minutos (extensible 2 min más)
                     </p>
                   </div>
 
                   <div>
-                    <p className="font-semibold text-gray-700">Datos Capturados</p>
-                    <ul className="list-disc list-inside text-gray-600 space-y-1">
+                    <p className="font-semibold text-slate-700">Datos Capturados</p>
+                    <ul className="list-disc list-inside text-slate-600 space-y-1">
                       <li>Frecuencia cardíaca (BPM)</li>
                       <li>Saturación O2 (%)</li>
                       <li>Pasos y distancia</li>
@@ -361,8 +355,8 @@ export const NewTestPage: React.FC = () => {
                   </div>
 
                   <div>
-                    <p className="font-semibold text-gray-700">Post-Prueba</p>
-                    <p className="text-gray-600">
+                    <p className="font-semibold text-slate-700">Post-Prueba</p>
+                    <p className="text-slate-600">
                       Reporte automático con gráficos, estadísticas y opciones de exportación.
                     </p>
                   </div>
@@ -370,10 +364,9 @@ export const NewTestPage: React.FC = () => {
               </div>
             </Card>
 
-            
-            <Card>
+            <Card className="border border-slate-200 shadow-lg rounded-2xl" padding="lg">
               <div className="space-y-3">
-                <h3 className="font-bold text-gray-900">Requisitos</h3>
+                <h3 className="font-bold text-slate-900">Requisitos</h3>
 
                 <div className="space-y-2 text-sm">
                   <label className="flex items-start gap-3 cursor-pointer">
@@ -385,7 +378,7 @@ export const NewTestPage: React.FC = () => {
                     />
                     <span
                       className={
-                        values.nombreCompleto ? 'text-green-700' : 'text-gray-600'
+                        values.nombreCompleto ? 'text-emerald-700' : 'text-slate-600'
                       }
                     >
                       Nombre del paciente
@@ -401,7 +394,7 @@ export const NewTestPage: React.FC = () => {
                     />
                     <span
                       className={
-                        values.edad && !ageError ? 'text-green-700' : 'text-gray-600'
+                        values.edad && !ageError ? 'text-emerald-700' : 'text-slate-600'
                       }
                     >
                       Edad válida
@@ -417,7 +410,7 @@ export const NewTestPage: React.FC = () => {
                     />
                     <span
                       className={
-                        values.altura && !heightError ? 'text-green-700' : 'text-gray-600'
+                        values.altura && !heightError ? 'text-emerald-700' : 'text-slate-600'
                       }
                     >
                       Altura válida
@@ -434,8 +427,8 @@ export const NewTestPage: React.FC = () => {
                     <span
                       className={
                         values.fechaOperacion && !dateError
-                          ? 'text-green-700'
-                          : 'text-gray-600'
+                          ? 'text-emerald-700'
+                          : 'text-slate-600'
                       }
                     >
                       Fecha de operación

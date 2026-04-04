@@ -378,33 +378,33 @@ export const ReportesPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">Reporte de Prueba 6MWT</h1>
-        <p className="text-gray-600">Análisis detallado de la prueba de caminata de 6 minutos</p>
+        <h1 className="text-4xl font-bold text-slate-900 mb-2">Reporte de Prueba 6MWT</h1>
+        <p className="text-slate-600">Análisis detallado de la prueba de caminata de 6 minutos</p>
       </div>
 
       
-      <Card className="mb-6">
+      <Card className="mb-6 border border-slate-200 shadow-lg rounded-2xl" padding="lg">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">{report.paciente}</h2>
+            <h2 className="text-2xl font-bold text-slate-900 mb-2">{report.paciente}</h2>
             <div className="grid grid-cols-4 gap-4 text-sm">
               <div>
-                <p className="text-gray-600">Edad</p>
-                <p className="font-semibold text-gray-900">{report.edad} años</p>
+                <p className="text-slate-500">Edad</p>
+                <p className="font-semibold text-slate-900">{report.edad} años</p>
               </div>
               <div>
-                <p className="text-gray-600">Sexo</p>
-                <p className="font-semibold text-gray-900">{report.sexo}</p>
+                <p className="text-slate-500">Sexo</p>
+                <p className="font-semibold text-slate-900">{report.sexo}</p>
               </div>
               <div>
-                <p className="text-gray-600">Diagnóstico</p>
-                <p className="font-semibold text-gray-900">{report.enfermedad}</p>
+                <p className="text-slate-500">Diagnóstico</p>
+                <p className="font-semibold text-slate-900">{report.enfermedad}</p>
               </div>
               <div>
-                <p className="text-gray-600">Fecha</p>
-                <p className="font-semibold text-gray-900">{report.fecha}</p>
+                <p className="text-slate-500">Fecha</p>
+                <p className="font-semibold text-slate-900">{report.fecha}</p>
               </div>
             </div>
           </div>
@@ -416,13 +416,13 @@ export const ReportesPage: React.FC = () => {
       </Card>
 
       
-      <div className="flex gap-4 mb-6 border-b border-gray-300">
+      <div className="flex gap-4 mb-6 border-b border-slate-300">
         <button
           onClick={() => setActiveTab('resumen')}
           className={`px-4 py-2 font-medium border-b-2 transition-all ${
             activeTab === 'resumen'
-              ? 'border-blue-600 text-blue-600'
-              : 'border-transparent text-gray-600 hover:text-gray-900'
+              ? 'border-slate-900 text-slate-900'
+              : 'border-transparent text-slate-500 hover:text-slate-900'
           }`}
         >
            Resumen
@@ -431,8 +431,8 @@ export const ReportesPage: React.FC = () => {
           onClick={() => setActiveTab('graficos')}
           className={`px-4 py-2 font-medium border-b-2 transition-all ${
             activeTab === 'graficos'
-              ? 'border-blue-600 text-blue-600'
-              : 'border-transparent text-gray-600 hover:text-gray-900'
+              ? 'border-slate-900 text-slate-900'
+              : 'border-transparent text-slate-500 hover:text-slate-900'
           }`}
         >
           Gráficos
@@ -441,8 +441,8 @@ export const ReportesPage: React.FC = () => {
           onClick={() => setActiveTab('observaciones')}
           className={`px-4 py-2 font-medium border-b-2 transition-all ${
             activeTab === 'observaciones'
-              ? 'border-blue-600 text-blue-600'
-              : 'border-transparent text-gray-600 hover:text-gray-900'
+              ? 'border-slate-900 text-slate-900'
+              : 'border-transparent text-slate-500 hover:text-slate-900'
           }`}
         >
            Observaciones
@@ -453,70 +453,70 @@ export const ReportesPage: React.FC = () => {
       {activeTab === 'resumen' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           
-          <Card>
-            <h3 className="text-xl font-bold text-gray-900 mb-6">Métricas Principales</h3>
+          <Card className="border border-slate-200 shadow-lg rounded-2xl" padding="lg">
+            <h3 className="text-xl font-bold text-slate-900 mb-6">Métricas Principales</h3>
             <div className="space-y-4">
-              <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
-                <span className="text-gray-700">Distancia Recorrida</span>
-                <span className="text-2xl font-bold text-blue-600">{report.distancia} m</span>
+              <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-200">
+                <span className="text-slate-700">Distancia Recorrida</span>
+                <span className="text-2xl font-bold text-slate-900">{report.distancia} m</span>
               </div>
-              <div className="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
-                <span className="text-gray-700">Velocidad Promedio</span>
-                <span className="text-2xl font-bold text-purple-600">{report.velocidadPromedio.toFixed(2)} km/h</span>
+              <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-200">
+                <span className="text-slate-700">Velocidad Promedio</span>
+                <span className="text-2xl font-bold text-slate-900">{report.velocidadPromedio.toFixed(2)} km/h</span>
               </div>
-              <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
-                <span className="text-gray-700">Pasos</span>
-                <span className="text-2xl font-bold text-green-600">{report.pasos}</span>
+              <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-200">
+                <span className="text-slate-700">Pasos</span>
+                <span className="text-2xl font-bold text-slate-900">{report.pasos}</span>
               </div>
-              <div className="flex justify-between items-center p-3 bg-yellow-50 rounded-lg">
-                <span className="text-gray-700">Duración</span>
-                <span className="text-2xl font-bold text-yellow-600">{report.duracion}</span>
+              <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-200">
+                <span className="text-slate-700">Duración</span>
+                <span className="text-2xl font-bold text-slate-900">{report.duracion}</span>
               </div>
             </div>
           </Card>
 
           
-          <Card>
-            <h3 className="text-xl font-bold text-gray-900 mb-6">Frecuencia Cardíaca (BPM)</h3>
+          <Card className="border border-slate-200 shadow-lg rounded-2xl" padding="lg">
+            <h3 className="text-xl font-bold text-slate-900 mb-6">Frecuencia Cardíaca (BPM)</h3>
             <div className="space-y-4">
-              <div className="flex justify-between items-center p-3 bg-gray-100 rounded-lg">
-                <span className="text-gray-700">FC en Reposo</span>
-                <span className="text-2xl font-bold text-gray-900">{report.fcReposo}</span>
+              <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-200">
+                <span className="text-slate-700">FC en Reposo</span>
+                <span className="text-2xl font-bold text-slate-900">{report.fcReposo}</span>
               </div>
-              <div className="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
-                <span className="text-gray-700">FC Promedio</span>
-                <span className="text-2xl font-bold text-orange-600">{report.fcPromedio}</span>
+              <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-200">
+                <span className="text-slate-700">FC Promedio</span>
+                <span className="text-2xl font-bold text-slate-900">{report.fcPromedio}</span>
               </div>
-              <div className="flex justify-between items-center p-3 bg-red-50 rounded-lg">
-                <span className="text-gray-700">FC Máxima</span>
-                <span className="text-2xl font-bold text-red-600">{report.fcPico}</span>
+              <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-200">
+                <span className="text-slate-700">FC Máxima</span>
+                <span className="text-2xl font-bold text-slate-900">{report.fcPico}</span>
               </div>
-              <div className="flex justify-between items-center p-3 bg-teal-50 rounded-lg">
-                <span className="text-gray-700">FC Recuperación (1 min)</span>
-                <span className="text-2xl font-bold text-teal-600">{report.fcRecuperacion}</span>
+              <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-200">
+                <span className="text-slate-700">FC Recuperación (1 min)</span>
+                <span className="text-2xl font-bold text-slate-900">{report.fcRecuperacion}</span>
               </div>
             </div>
           </Card>
 
           
-          <Card>
-            <h3 className="text-xl font-bold text-gray-900 mb-6">Saturación de Oxígeno (%)</h3>
+          <Card className="border border-slate-200 shadow-lg rounded-2xl" padding="lg">
+            <h3 className="text-xl font-bold text-slate-900 mb-6">Saturación de Oxígeno (%)</h3>
             <div className="space-y-4">
-              <div className="flex justify-between items-center p-3 bg-cyan-50 rounded-lg">
-                <span className="text-gray-700">SpO₂ Inicial</span>
-                <span className="text-2xl font-bold text-cyan-600">{report.spo2Inicial}%</span>
+              <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-200">
+                <span className="text-slate-700">SpO₂ Inicial</span>
+                <span className="text-2xl font-bold text-slate-900">{report.spo2Inicial}%</span>
               </div>
-              <div className="flex justify-between items-center p-3 bg-lime-50 rounded-lg">
-                <span className="text-gray-700">SpO₂ Promedio</span>
-                <span className="text-2xl font-bold text-lime-600">{report.spo2Promedio}%</span>
+              <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-200">
+                <span className="text-slate-700">SpO₂ Promedio</span>
+                <span className="text-2xl font-bold text-slate-900">{report.spo2Promedio}%</span>
               </div>
-              <div className="flex justify-between items-center p-3 bg-rose-50 rounded-lg">
-                <span className="text-gray-700">SpO₂ Mínimo</span>
-                <span className="text-2xl font-bold text-rose-600">{report.spo2Minimo}%</span>
+              <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-200">
+                <span className="text-slate-700">SpO₂ Mínimo</span>
+                <span className="text-2xl font-bold text-slate-900">{report.spo2Minimo}%</span>
               </div>
-              <div className="flex justify-between items-center p-3 bg-gray-100 rounded-lg">
-                <span className="text-gray-700">O₂ Suplementario</span>
-                <span className="text-xl font-bold text-gray-900">
+              <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-200">
+                <span className="text-slate-700">O₂ Suplementario</span>
+                <span className="text-xl font-bold text-slate-900">
                   {report.oxigenoSupplementario ? 'Sí' : 'No'}
                 </span>
               </div>
@@ -524,16 +524,16 @@ export const ReportesPage: React.FC = () => {
           </Card>
 
           
-          <Card>
-            <h3 className="text-xl font-bold text-gray-900 mb-6">Datos Basales</h3>
+          <Card className="border border-slate-200 shadow-lg rounded-2xl" padding="lg">
+            <h3 className="text-xl font-bold text-slate-900 mb-6">Datos Basales</h3>
             <div className="space-y-4">
-              <div className="flex justify-between items-center p-3 bg-indigo-50 rounded-lg">
-                <span className="text-gray-700">Presión Sanguínea Inicial</span>
-                <span className="text-xl font-bold text-indigo-600">{report.presionInicial}</span>
+              <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-200">
+                <span className="text-slate-700">Presión Sanguínea Inicial</span>
+                <span className="text-xl font-bold text-slate-900">{report.presionInicial}</span>
               </div>
-              <div className="flex justify-between items-center p-3 bg-yellow-50 rounded-lg">
-                <span className="text-gray-700">Alertas Detectadas</span>
-                <span className="text-2xl font-bold text-yellow-600">{report.alertas}</span>
+              <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-200">
+                <span className="text-slate-700">Alertas Detectadas</span>
+                <span className="text-2xl font-bold text-slate-900">{report.alertas}</span>
               </div>
             </div>
           </Card>
@@ -541,15 +541,15 @@ export const ReportesPage: React.FC = () => {
       )}
 
       {activeTab === 'graficos' && (
-        <Card>
+        <Card className="border border-slate-200 shadow-lg rounded-2xl" padding="lg">
           <div className="space-y-8">
-            <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg p-3">
-              <p className="text-sm font-medium text-blue-900">
+            <div className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-lg p-3">
+              <p className="text-sm font-medium text-slate-800">
                 {isWsConnected
                   ? 'Tiempo real por WebSocket (sin polling)'
                   : 'WebSocket no disponible. Usando polling de respaldo cada 2s'}
               </p>
-              <p className="text-xs text-blue-700">
+              <p className="text-xs text-slate-600">
                 {lastRefresh ? `Última actualización: ${lastRefresh.toLocaleTimeString()}` : 'Sin actualizaciones'}
                 {' · '}Puntos: {chartSeries.totalPoints}
               </p>
@@ -557,24 +557,24 @@ export const ReportesPage: React.FC = () => {
 
             <MiniLineChart
               title="Evolución de Frecuencia Cardíaca"
-              colorClass="bg-red-50"
-              stroke="#dc2626"
+              colorClass="bg-slate-50 border border-slate-200"
+              stroke="#0f172a"
               data={chartSeries.fc}
               unit="BPM"
             />
 
             <MiniLineChart
               title="Evolución de SpO₂"
-              colorClass="bg-cyan-50"
-              stroke="#0891b2"
+              colorClass="bg-slate-50 border border-slate-200"
+              stroke="#334155"
               data={chartSeries.spo2}
               unit="%"
             />
 
             <MiniLineChart
               title="Distancia Acumulada"
-              colorClass="bg-emerald-50"
-              stroke="#059669"
+              colorClass="bg-slate-50 border border-slate-200"
+              stroke="#475569"
               data={chartSeries.distancia}
               unit="m"
             />
@@ -584,9 +584,9 @@ export const ReportesPage: React.FC = () => {
 
       {activeTab === 'observaciones' && (
         <div className="space-y-6">
-          <Card>
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Hallazgos Clínicos</h3>
-            <div className="space-y-3 text-gray-700">
+          <Card className="border border-slate-200 shadow-lg rounded-2xl" padding="lg">
+            <h3 className="text-xl font-bold text-slate-900 mb-4">Hallazgos Clínicos</h3>
+            <div className="space-y-3 text-slate-700">
               <p>✓ Paciente completó exitosamente los 6 minutos de caminata</p>
               <p>✓ Distancia recorrida dentro de rangos normales para su grupo de edad</p>
               <p>✓ Respuesta cardiovascular adecuada al ejercicio</p>
@@ -595,31 +595,31 @@ export const ReportesPage: React.FC = () => {
             </div>
           </Card>
 
-          <Card>
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Observaciones Clínicas</h3>
+          <Card className="border border-slate-200 shadow-lg rounded-2xl" padding="lg">
+            <h3 className="text-xl font-bold text-slate-900 mb-4">Observaciones Clínicas</h3>
             <textarea
-              className="form-input w-full"
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-800"
               rows={6}
               placeholder="Observaciones adicionales del médico..."
               defaultValue="Paciente toleró adecuadamente el test. Se observó respiración disnéica leve. Sin síncope. Caminar fue con buena técnica."
             />
           </Card>
 
-          <Card>
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Interpretación</h3>
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <p className="text-green-900">
+          <Card className="border border-slate-200 shadow-lg rounded-2xl" padding="lg">
+            <h3 className="text-xl font-bold text-slate-900 mb-4">Interpretación</h3>
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
+              <p className="text-slate-900">
                 <strong>Resultado: NORMAL</strong>
               </p>
-              <p className="text-green-800 text-sm mt-2">
+              <p className="text-slate-700 text-sm mt-2">
                 El paciente mostró una tolerancia normal al ejercicio con valores dentro de los rangos esperados para su edad y condición.
               </p>
             </div>
           </Card>
 
-          <Card>
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Recomendaciones</h3>
-            <ul className="space-y-2 text-gray-700">
+          <Card className="border border-slate-200 shadow-lg rounded-2xl" padding="lg">
+            <h3 className="text-xl font-bold text-slate-900 mb-4">Recomendaciones</h3>
+            <ul className="space-y-2 text-slate-700">
               <li>• Continuar con rehabilitación pulmonar</li>
               <li>• Aumentar gradualmente la actividad física</li>
               <li>• Seguimiento en 3 meses</li>
@@ -628,14 +628,14 @@ export const ReportesPage: React.FC = () => {
           </Card>
 
           <div className="flex gap-4">
-            <Button variant="primary">
-              💾 Guardar Reporte
+            <Button variant="primary" className="!bg-slate-900 hover:!bg-slate-800">
+              Guardar Reporte
             </Button>
             <Button variant="secondary">
-              📥 Descargar PDF
+              Descargar PDF
             </Button>
             <Button variant="outline">
-              🖨️ Imprimir
+              Imprimir
             </Button>
           </div>
         </div>

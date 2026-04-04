@@ -84,16 +84,19 @@ export const HistorialPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">Historial de Pruebas</h1>
-        <p className="text-gray-600">Revisa todas las pruebas realizadas</p>
+        <div className="rounded-2xl bg-slate-900 text-white p-6 sm:p-8 shadow-xl border border-slate-800">
+          <p className="text-xs uppercase tracking-[0.22em] text-slate-400 mb-3">Seguimiento clínico</p>
+          <h1 className="text-4xl font-bold mb-2">Historial de Pruebas</h1>
+          <p className="text-slate-300">Revisa todas las pruebas realizadas</p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         <div className="lg:col-span-2">
-          <Card>
+          <Card className="border border-slate-200 shadow-lg rounded-2xl" padding="lg">
             <div className="space-y-6">
               
               <div>
@@ -102,21 +105,21 @@ export const HistorialPage: React.FC = () => {
                   placeholder="Buscar por paciente o enfermedad..."
                   value={filtro}
                   onChange={(e) => setFiltro(e.target.value)}
-                  className="form-input w-full"
+                  className="w-full h-11 rounded-lg border border-slate-300 bg-white px-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-800"
                 />
               </div>
 
               
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead className="bg-gray-100 border-b">
+                  <thead className="bg-slate-100 border-b border-slate-200">
                     <tr>
-                      <th className="px-4 py-3 text-left font-semibold text-gray-900">Paciente</th>
-                      <th className="px-4 py-3 text-left font-semibold text-gray-900">Enfermedad</th>
-                      <th className="px-4 py-3 text-left font-semibold text-gray-900">Fecha</th>
-                      <th className="px-4 py-3 text-center font-semibold text-gray-900">Duración</th>
-                      <th className="px-4 py-3 text-center font-semibold text-gray-900">Distancia</th>
-                      <th className="px-4 py-3 text-center font-semibold text-gray-900">Estado</th>
+                      <th className="px-4 py-3 text-left font-semibold text-slate-900">Paciente</th>
+                      <th className="px-4 py-3 text-left font-semibold text-slate-900">Enfermedad</th>
+                      <th className="px-4 py-3 text-left font-semibold text-slate-900">Fecha</th>
+                      <th className="px-4 py-3 text-center font-semibold text-slate-900">Duración</th>
+                      <th className="px-4 py-3 text-center font-semibold text-slate-900">Distancia</th>
+                      <th className="px-4 py-3 text-center font-semibold text-slate-900">Estado</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -124,13 +127,13 @@ export const HistorialPage: React.FC = () => {
                       <tr
                         key={test.id}
                         onClick={() => setSelectedTest(test)}
-                        className="border-b hover:bg-gray-50 cursor-pointer transition-colors"
+                        className="border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors"
                       >
-                        <td className="px-4 py-3 text-gray-900 font-medium">{test.paciente}</td>
-                        <td className="px-4 py-3 text-gray-600">{test.enfermedad}</td>
-                        <td className="px-4 py-3 text-gray-600">{test.fecha}</td>
-                        <td className="px-4 py-3 text-center text-gray-900">{test.duracion}</td>
-                        <td className="px-4 py-3 text-center font-semibold text-gray-900">
+                        <td className="px-4 py-3 text-slate-900 font-medium">{test.paciente}</td>
+                        <td className="px-4 py-3 text-slate-600">{test.enfermedad}</td>
+                        <td className="px-4 py-3 text-slate-600">{test.fecha}</td>
+                        <td className="px-4 py-3 text-center text-slate-900">{test.duracion}</td>
+                        <td className="px-4 py-3 text-center font-semibold text-slate-900">
                           {test.distancia} m
                         </td>
                         <td className="px-4 py-3 text-center">
@@ -150,7 +153,7 @@ export const HistorialPage: React.FC = () => {
 
               {testsFiltrados.length === 0 && (
                 <div className="text-center py-8">
-                  <p className="text-gray-600">No se encontraron pruebas</p>
+                  <p className="text-slate-600">No se encontraron pruebas</p>
                 </div>
               )}
             </div>
@@ -160,49 +163,49 @@ export const HistorialPage: React.FC = () => {
         
         <div>
           {selectedTest ? (
-            <Card>
+            <Card className="border border-slate-200 shadow-lg rounded-2xl" padding="lg">
               <div className="space-y-4">
-                <h2 className="text-xl font-bold text-gray-900">Detalles de la Prueba</h2>
+                <h2 className="text-xl font-bold text-slate-900">Detalles de la Prueba</h2>
 
                 <div className="space-y-3 text-sm">
                   <div>
-                    <p className="text-gray-600">Paciente</p>
-                    <p className="font-semibold text-gray-900">{selectedTest.paciente}</p>
+                    <p className="text-slate-600">Paciente</p>
+                    <p className="font-semibold text-slate-900">{selectedTest.paciente}</p>
                   </div>
 
                   <div>
-                    <p className="text-gray-600">Edad</p>
-                    <p className="font-semibold text-gray-900">{selectedTest.edad} años</p>
+                    <p className="text-slate-600">Edad</p>
+                    <p className="font-semibold text-slate-900">{selectedTest.edad} años</p>
                   </div>
 
                   <div>
-                    <p className="text-gray-600">Enfermedad Pulmonar</p>
-                    <p className="font-semibold text-gray-900">{selectedTest.enfermedad}</p>
+                    <p className="text-slate-600">Enfermedad Pulmonar</p>
+                    <p className="font-semibold text-slate-900">{selectedTest.enfermedad}</p>
                   </div>
 
-                  <div className="border-t pt-3">
-                    <p className="text-gray-600">FC Promedio</p>
-                    <p className="font-semibold text-gray-900">{selectedTest.fcPromedio} BPM</p>
-                  </div>
-
-                  <div>
-                    <p className="text-gray-600">SpO₂ Promedio</p>
-                    <p className="font-semibold text-gray-900">{selectedTest.spo2Promedio}%</p>
+                  <div className="border-t border-slate-200 pt-3">
+                    <p className="text-slate-600">FC Promedio</p>
+                    <p className="font-semibold text-slate-900">{selectedTest.fcPromedio} BPM</p>
                   </div>
 
                   <div>
-                    <p className="text-gray-600">Distancia Recorrida</p>
-                    <p className="font-semibold text-gray-900">{selectedTest.distancia} metros</p>
+                    <p className="text-slate-600">SpO₂ Promedio</p>
+                    <p className="font-semibold text-slate-900">{selectedTest.spo2Promedio}%</p>
                   </div>
 
                   <div>
-                    <p className="text-gray-600">Duración</p>
-                    <p className="font-semibold text-gray-900">{selectedTest.duracion}</p>
+                    <p className="text-slate-600">Distancia Recorrida</p>
+                    <p className="font-semibold text-slate-900">{selectedTest.distancia} metros</p>
+                  </div>
+
+                  <div>
+                    <p className="text-slate-600">Duración</p>
+                    <p className="font-semibold text-slate-900">{selectedTest.duracion}</p>
                   </div>
                 </div>
 
-                <div className="border-t pt-4 space-y-2">
-                  <Button variant="primary" fullWidth onClick={() => navigate(`/reportes?testId=${selectedTest.id}`)}>
+                <div className="border-t border-slate-200 pt-4 space-y-2">
+                  <Button variant="primary" className="!bg-slate-900 hover:!bg-slate-800" fullWidth onClick={() => navigate(`/reportes?testId=${selectedTest.id}`)}>
                     Ver Reporte
                   </Button>
                   <Button variant="outline" fullWidth>
@@ -212,15 +215,15 @@ export const HistorialPage: React.FC = () => {
               </div>
             </Card>
           ) : (
-            <Card>
+            <Card className="border border-slate-200 shadow-lg rounded-2xl" padding="lg">
               <div className="text-center py-8">
-                <p className="text-gray-600">Selecciona una prueba para ver detalles</p>
+                <p className="text-slate-600">Selecciona una prueba para ver detalles</p>
               </div>
             </Card>
           )}
         </div>
       </div>
-      {isLoading && <div className="text-center py-4 text-gray-600">Cargando historial...</div>}
+      {isLoading && <div className="text-center py-4 text-slate-600">Cargando historial...</div>}
     </div>
   );
 };
