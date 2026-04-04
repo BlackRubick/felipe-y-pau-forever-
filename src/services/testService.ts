@@ -114,6 +114,20 @@ class TestService {
     return mapBackendTestToFrontend(backendTest);
   }
 
+  async updatePatientAcrossTests(
+    patientId: string,
+    data: {
+      nombreCompleto: string;
+      edad: number;
+      altura: number;
+      sexo: 'M' | 'F' | 'O';
+      raza?: string;
+      enfermedadPulmonar?: string;
+    }
+  ): Promise<{ updated: number }> {
+    return apiService.put<{ updated: number }>(`/tests/patient/${encodeURIComponent(patientId)}`, data);
+  }
+
   async finalizeTest(testId: string): Promise<Test> {
     return apiService.put<Test>(`/tests/${testId}/finalize`, {});
   }

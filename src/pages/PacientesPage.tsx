@@ -219,22 +219,34 @@ export const PacientesPage: React.FC = () => {
 
     setIsSaving(true);
     try {
-      await Promise.all(
-        patient.testIds.map((testId) =>
-          testService.updateTest(testId, {
-            paciente: {
-              id: patient.basePatientId,
-              nombreCompleto: result.value.nombre,
-              edad: result.value.edad,
-              altura: result.value.altura,
-              peso: patient.peso,
-              sexo: result.value.sexo,
-              raza: result.value.raza || undefined,
-            } as any,
-            enfermedadPulmonar: result.value.diagnostico as any,
-          } as any)
-        )
-      );
+      const bulk = await testService.updatePatientAcrossTests(patient.basePatientId, {
+        nombreCompleto: result.value.nombre,
+        edad: result.value.edad,
+        altura: result.value.altura,
+        sexo: result.value.sexo,
+        raza: result.value.raza || undefined,
+        enfermedadPulmonar: result.value.diagnostico,
+      });
+
+      // Respaldo para datos heredados sin paciente_id consistente.
+      if (!bulk.updated) {
+        await Promise.all(
+          patient.testIds.map((testId) =>
+            testService.updateTest(testId, {
+              paciente: {
+                id: patient.basePatientId,
+                nombreCompleto: result.value.nombre,
+                edad: result.value.edad,
+                altura: result.value.altura,
+                peso: patient.peso,
+                sexo: result.value.sexo,
+                raza: result.value.raza || undefined,
+              } as any,
+              enfermedadPulmonar: result.value.diagnostico as any,
+            } as any)
+          )
+        );
+      }
 
       await loadPatients();
       await Swal.fire({

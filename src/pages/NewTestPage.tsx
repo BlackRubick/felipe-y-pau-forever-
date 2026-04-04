@@ -31,15 +31,34 @@ export const NewTestPage: React.FC = () => {
   const prefillPatient = ((location.state as { prefillPatient?: PrefillPatientData } | null)?.prefillPatient) || null;
 
   const buildPatientId = () => {
-    const explicitId = values.idPaciente?.trim();
+    const toBase36Hash = (input: string) => {
+      let hash = 0;
+      for (let i = 0; i < input.length; i += 1) {
+        hash = ((hash << 5) - hash + input.charCodeAt(i)) | 0;
+      }
+      return Math.abs(hash).toString(36);
+    };
+
+    const sanitize = (input: string) =>
+      input
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+
+    const explicitId = sanitize(values.idPaciente || '');
     if (explicitId) {
-      return explicitId;
+      // tests.paciente_id is VARCHAR(36) in backend DB schema.
+      return `patient-${explicitId}`.slice(0, 36);
     }
 
-    const normalizedName = values.nombreCompleto.trim().toLowerCase().replace(/\s+/g, '-');
-    const normalizedSex = values.sexo.toLowerCase();
-    const normalizedRaza = (values.raza || 'sin-raza').trim().toLowerCase().replace(/\s+/g, '-');
-    return `patient-${normalizedName}-${values.edad}-${values.altura}-${normalizedSex}-${normalizedRaza}`;
+    const normalizedName = sanitize(values.nombreCompleto || 'sin-nombre');
+    const normalizedSex = sanitize(values.sexo || 'o');
+    const normalizedRaza = sanitize(values.raza || 'sin-raza');
+    const raw = `${normalizedName}-${values.edad}-${values.altura}-${normalizedSex}-${normalizedRaza}`;
+    const hash = toBase36Hash(raw);
+    const slug = `${normalizedName}-${hash}`.slice(0, 28);
+    return `patient-${slug}`.slice(0, 36);
   };
 
   const { values, errors, touched, handleChange, handleBlur, resetForm, setFieldValue } =

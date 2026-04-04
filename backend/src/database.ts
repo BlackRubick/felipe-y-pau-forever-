@@ -437,6 +437,45 @@ export class Database {
     }
   }
 
+  async updatePatientAcrossTests(
+    patientId: string,
+    data: {
+      nombreCompleto: string;
+      edad: number;
+      altura: number;
+      sexo: 'M' | 'F' | 'O';
+      raza?: string;
+      enfermedadPulmonar?: string;
+    }
+  ): Promise<number> {
+    const connection = await pool.getConnection();
+    try {
+      const [result]: any = await connection.execute(
+        `UPDATE tests
+         SET paciente_nombreCompleto = ?,
+             paciente_edad = ?,
+             paciente_altura = ?,
+             paciente_sexo = ?,
+             paciente_raza = ?,
+             enfermedadPulmonar = COALESCE(?, enfermedadPulmonar)
+         WHERE paciente_id = ?`,
+        [
+          data.nombreCompleto,
+          data.edad,
+          data.altura,
+          data.sexo,
+          data.raza ?? null,
+          data.enfermedadPulmonar ?? null,
+          patientId,
+        ]
+      );
+
+      return result.affectedRows || 0;
+    } finally {
+      connection.release();
+    }
+  }
+
   async addTestReading(testId: string, reading: TestReading): Promise<TestReading> {
     const connection = await pool.getConnection();
     try {

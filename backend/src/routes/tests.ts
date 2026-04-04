@@ -151,6 +151,30 @@ router.get('/device/current', async (req, res: Response) => {
   }
 });
 
+router.put('/patient/:patientId', async (req, res: Response) => {
+  try {
+    const { nombreCompleto, edad, altura, sexo, raza, enfermedadPulmonar } = req.body;
+
+    if (!nombreCompleto || !edad || !altura || !sexo) {
+      res.status(400).json({ error: 'Missing required patient fields' });
+      return;
+    }
+
+    const updated = await db.updatePatientAcrossTests(req.params.patientId, {
+      nombreCompleto,
+      edad: Number(edad),
+      altura: Number(altura),
+      sexo,
+      raza,
+      enfermedadPulmonar,
+    });
+
+    res.json({ updated });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 router.get('/:id((?!active$)[A-Za-z0-9\-]+)', async (req, res: Response) => {
   try {
     if (req.params.id === 'active' || req.params.id === 'current' || req.params.id === 'device') {
