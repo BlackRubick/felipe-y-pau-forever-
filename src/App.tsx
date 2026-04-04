@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, TestProvider, NotificationProvider, TestTabProvider } from './context';
 import { NotificationContainer, ProtectedRoute, Navbar } from './components/common';
-import { LoginPage, RegisterPage, NewTestPage, HistorialPage, ReportesPage, PacientesPage, DispositivoPage } from './pages';
+import { LoginPage, RegisterPage, NewTestPage, HistorialPage, ReportesPage, PacientesPage } from './pages';
 import './App.css';
 
 function App() {
@@ -66,12 +66,7 @@ function App() {
 
                   <Route
                     path="/dispositivo"
-                    element={
-                      <ProtectedRoute>
-                        <Navbar />
-                        <DispositivoPage />
-                      </ProtectedRoute>
-                    }
+                    element={<Navigate to="/nueva-prueba" replace />}
                   />
 
                   

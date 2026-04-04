@@ -62,13 +62,6 @@ export const Navbar: React.FC = () => {
                 Pacientes
               </Link>
             )}
-
-            <Link
-              to="/dispositivo"
-              className={`px-3 py-2 font-medium transition-colors ${isActive('/dispositivo')}`}
-            >
-              Dispositivo
-            </Link>
           </div>
 
           
@@ -154,16 +147,6 @@ export const Navbar: React.FC = () => {
                 Pacientes
               </Link>
             )}
-
-            <Link
-              to="/dispositivo"
-              onClick={() => setIsMenuOpen(false)}
-              className={`block px-4 py-2 rounded font-medium ${
-                isActive('/dispositivo') ? 'bg-blue-100' : 'hover:bg-gray-100'
-              }`}
-            >
-              Dispositivo
-            </Link>
           </div>
         )}
       </div>
