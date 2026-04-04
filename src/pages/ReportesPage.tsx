@@ -180,20 +180,36 @@ export const ReportesPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
   const [isWsConnected, setIsWsConnected] = useState(false);
+  const requestedTestId = searchParams.get('testId') || '';
 
   useEffect(() => {
     const load = async () => {
       setIsLoading(true);
       try {
-        const testId = searchParams.get('testId');
-        if (testId) {
-          try {
-            const test = await testService.getTest(testId);
-            setCurrentTest(test);
+        if (requestedTestId) {
+          const all = await testService.getAllTests();
+          const exact = all.find((t) => t.id === requestedTestId) || null;
+
+          if (exact) {
+            setCurrentTest(exact);
             setLastRefresh(new Date());
-            console.log('✅ Test cargado:', test.id, 'Lecturas:', test.readings.length);
+            console.log('✅ Test cargado por testId exacto:', exact.id, 'Lecturas:', exact.readings.length);
+            return;
+          }
+
+          try {
+            const test = await testService.getTest(requestedTestId);
+            if (test?.id === requestedTestId) {
+              setCurrentTest(test);
+              setLastRefresh(new Date());
+              console.log('✅ Test cargado por endpoint:', test.id, 'Lecturas:', test.readings.length);
+            } else {
+              const fallback = all[0] || null;
+              setCurrentTest(fallback);
+              setLastRefresh(new Date());
+              console.warn('⚠️ testId no coincide con respuesta del backend, usando fallback:', fallback?.id);
+            }
           } catch {
-            const all = await testService.getAllTests();
             const fallback = all[0] || null;
             setCurrentTest(fallback);
             setLastRefresh(new Date());
@@ -213,7 +229,7 @@ export const ReportesPage: React.FC = () => {
       }
     };
     load();
-  }, [searchParams]);
+  }, [requestedTestId]);
 
   // Polling fallback cuando WebSocket no está conectado
   useEffect(() => {
