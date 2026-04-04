@@ -27,6 +27,7 @@ MAX30105 SensorMax30102;
 
 float Latidos_Promedio = 0;
 float spo2 = 0;
+float ultimoBpmValido = 0;
 
 const byte Tamano_Tasa = 4;
 byte rates[Tamano_Tasa] = {0};
@@ -200,6 +201,7 @@ void loop() {
       bpm_raw = 60.0f / (delta / 1000.0f);
 
       if (bpm_raw > 20 && bpm_raw < 255) {
+        ultimoBpmValido = bpm_raw;
         rates[Tasa_Spot++] = (byte)bpm_raw;
         Tasa_Spot %= Tamano_Tasa;
 
@@ -472,8 +474,19 @@ void enviarLecturaServidor() {
 
   unsigned long elapsedSec = (millis() - tiempoInicioTest) / 1000;
 
+  int bpmEnviar = 0;
+  if (hayDedo) {
+    if (Latidos_Promedio > 0) {
+      bpmEnviar = (int)Latidos_Promedio;
+    } else if (bpm_raw > 20 && bpm_raw < 255) {
+      bpmEnviar = (int)bpm_raw;
+    } else if (ultimoBpmValido > 20 && ultimoBpmValido < 255) {
+      bpmEnviar = (int)ultimoBpmValido;
+    }
+  }
+
   DynamicJsonDocument doc(256);
-  doc["frecuenciaCardiaca"] = hayDedo ? (int)Latidos_Promedio : 0;
+  doc["frecuenciaCardiaca"] = bpmEnviar;
   doc["spo2"]               = hayDedo ? (int)spo2 : 0;
   doc["pasos"]              = contadorPasos;
   doc["distancia"]          = distanciaAcumuladaCm / 100;  // Convertir cm a metros
@@ -503,10 +516,19 @@ void actualizarTest() {
 
   unsigned long duracionSec = (millis() - tiempoInicioTest) / 1000;
 
+  int bpmPromedioEnviar = 0;
+  if (hayDedo) {
+    if (Latidos_Promedio > 0) {
+      bpmPromedioEnviar = (int)Latidos_Promedio;
+    } else if (ultimoBpmValido > 20 && ultimoBpmValido < 255) {
+      bpmPromedioEnviar = (int)ultimoBpmValido;
+    }
+  }
+
   DynamicJsonDocument doc(256);
   doc["duracion"]     = duracionSec;
   doc["distanciaTotal"] = distanciaAcumuladaCm / 100;  // Convertir a metros
-  doc["fcPromedio"]   = hayDedo ? (int)Latidos_Promedio : 0;
+  doc["fcPromedio"]   = bpmPromedioEnviar;
   doc["spo2Promedio"] = hayDedo ? (int)spo2 : 0;
   doc["estado"]       = "en_progreso";
 
@@ -526,10 +548,21 @@ void actualizarTest() {
 
 // =======================================================
 void enviarJSON() {
+  int bpmEnviar = 0;
+  if (hayDedo) {
+    if (Latidos_Promedio > 0) {
+      bpmEnviar = (int)Latidos_Promedio;
+    } else if (bpm_raw > 20 && bpm_raw < 255) {
+      bpmEnviar = (int)bpm_raw;
+    } else if (ultimoBpmValido > 20 && ultimoBpmValido < 255) {
+      bpmEnviar = (int)ultimoBpmValido;
+    }
+  }
+
   Serial.print("{");
   Serial.print("\"device_id\":\""); Serial.print(DEVICE_ID); Serial.print("\",");
   Serial.print("\"test_id\":\"");   Serial.print(testIdActual); Serial.print("\",");
-  Serial.print("\"bpm\":");         Serial.print(hayDedo ? (int)Latidos_Promedio : 0); Serial.print(",");
+  Serial.print("\"bpm\":");         Serial.print(bpmEnviar); Serial.print(",");
   Serial.print("\"spo2\":");        Serial.print(hayDedo ? (int)spo2 : 0); Serial.print(",");
   Serial.print("\"pasos\":");       Serial.print(contadorPasos); Serial.print(",");
   Serial.print("\"distancia_m\":");  Serial.print(distanciaAcumuladaCm / 100.0); Serial.print(",");
@@ -606,11 +639,22 @@ void pantallaMonitor() {
   display.println("Monitor Biom.");
   display.drawLine(0, 9, 127, 9, SSD1306_WHITE);
 
+  int bpmPantalla = 0;
+  if (hayDedo) {
+    if (Latidos_Promedio > 0) {
+      bpmPantalla = (int)Latidos_Promedio;
+    } else if (bpm_raw > 20 && bpm_raw < 255) {
+      bpmPantalla = (int)bpm_raw;
+    } else if (ultimoBpmValido > 20 && ultimoBpmValido < 255) {
+      bpmPantalla = (int)ultimoBpmValido;
+    }
+  }
+
   display.setCursor(0, 14);
-  if (!hayDedo) {
+  if (!hayDedo || bpmPantalla <= 0) {
     display.print("BPM: --  O2: --%");
   } else {
-    display.print("BPM:"); display.print((int)Latidos_Promedio);
+    display.print("BPM:"); display.print(bpmPantalla);
     display.print(" O2:"); display.print((int)spo2); display.print("%");
   }
 
