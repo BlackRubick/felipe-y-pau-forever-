@@ -8,6 +8,22 @@ import { broadcastAlert, broadcastReading } from '../realtime';
 const router = express.Router();
 let currentActiveTestId: string | null = null;
 
+const sanitizePatientId = (value: string | undefined) => {
+  const clean = (value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9\-]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+
+  if (!clean) {
+    return `patient-${uuidv4().substring(0, 8)}`;
+  }
+
+  const withPrefix = clean.startsWith('patient-') ? clean : `patient-${clean}`;
+  return withPrefix.slice(0, 36);
+};
+
 const resolveActiveTest = async (): Promise<Test | null> => {
   const allTests = await db.getAllTests();
   const activeTests = allTests
@@ -56,13 +72,34 @@ router.post('/', async (req, res: Response) => {
       observacionesPrevias,
     } = req.body as CreateTestRequest;
 
+    if (!paciente?.nombreCompleto || !paciente?.edad || !paciente?.altura) {
+      res.status(400).json({ error: 'Datos de paciente incompletos' });
+      return;
+    }
+
+    const safeFechaCaminata = new Date(fechaCaminata);
+    const normalizedFechaCaminata = Number.isNaN(safeFechaCaminata.getTime())
+      ? new Date()
+      : safeFechaCaminata;
+
+    const normalizedPaciente = {
+      ...paciente,
+      id: sanitizePatientId(paciente.id),
+      nombreCompleto: String(paciente.nombreCompleto).trim(),
+      edad: Number(paciente.edad),
+      altura: Number(paciente.altura),
+      peso: paciente.peso !== undefined && paciente.peso !== null ? Number(paciente.peso) : undefined,
+      raza: paciente.raza ? String(paciente.raza).trim() : undefined,
+      sexo: paciente.sexo || 'O',
+    };
+
     const newTest: Test = {
       id: `test-${uuidv4().substring(0, 8)}`,
-      paciente,
+      paciente: normalizedPaciente,
       medicoResponsable,
       fecha: new Date(),
       numeroCaminata,
-      fechaCaminata: new Date(fechaCaminata),
+      fechaCaminata: normalizedFechaCaminata,
       enfermedadPulmonar,
       presionSanguineaInicial,
       oxigenoSupplementario,
@@ -82,7 +119,8 @@ router.post('/', async (req, res: Response) => {
     const persisted = await db.getTestById(created.id);
     res.status(201).json(persisted || created);
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('❌ Error creating test:', error);
+    res.status(500).json({ error: 'Internal server error', details: error instanceof Error ? error.message : String(error) });
   }
 });
 

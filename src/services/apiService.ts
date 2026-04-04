@@ -91,7 +91,8 @@ class ApiService {
     if (error instanceof Error) return error;
 
     const apiError = error as ApiError;
-    return new Error(apiError.message || error?.error || 'Error desconocido en la API');
+    const detail = error?.details ? ` (${error.details})` : '';
+    return new Error((apiError.message || error?.error || 'Error desconocido en la API') + detail);
   }
 }
 
