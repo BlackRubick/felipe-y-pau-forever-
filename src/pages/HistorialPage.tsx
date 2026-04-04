@@ -126,7 +126,7 @@ export const HistorialPage: React.FC = () => {
                     {testsFiltrados.map((test) => (
                       <tr
                         key={test.id}
-                        onClick={() => setSelectedTest(test)}
+                        onClick={() => navigate(`/reportes?testId=${test.id}`)}
                         className="border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors"
                       >
                         <td className="px-4 py-3 text-slate-900 font-medium">{test.paciente}</td>
