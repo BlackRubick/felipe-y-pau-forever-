@@ -16,8 +16,6 @@ interface LineChartPoint {
   y: number;
 }
 
-const CHART_WINDOW_SIZE = 40;
-
 const getRealtimeWsUrl = (testId: string) => {
   const wsBase = process.env.REACT_APP_WS_URL || 'ws://localhost:3001';
   return `${wsBase}/ws/tests?testId=${encodeURIComponent(testId)}`;
@@ -176,6 +174,7 @@ export const ReportesPage: React.FC = () => {
     const tab = searchParams.get('tab');
     return tab === 'graficos' || tab === 'observaciones' ? tab : 'resumen';
   });
+  const [chartRange, setChartRange] = useState<'all' | 'last100'>('all');
   const [currentTest, setCurrentTest] = useState<Test | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
@@ -373,21 +372,24 @@ export const ReportesPage: React.FC = () => {
   const chartSeries = useMemo(() => {
     const readings = currentTest?.readings || [];
     const series = readings.map((r, i) => ({
-      x: typeof r.timestamp === 'number' ? r.timestamp : i,
+      // Use sequential index so all points are rendered even when device sends many
+      // readings with the same timestamp value.
+      x: i,
       fc: r.fc || 0,
       spo2: r.spo2 || 0,
       distancia: r.distancia || 0,
     }));
 
-    const visible = series.slice(-CHART_WINDOW_SIZE);
+    const visible = chartRange === 'last100' ? series.slice(-100) : series;
 
     return {
       fc: visible.map((p) => ({ x: p.x, y: p.fc })),
       spo2: visible.map((p) => ({ x: p.x, y: p.spo2 })),
       distancia: visible.map((p) => ({ x: p.x, y: p.distancia })),
+      visiblePoints: visible.length,
       totalPoints: series.length,
     };
-  }, [currentTest]);
+  }, [currentTest, chartRange]);
 
   if (isLoading) {
     return <div className="max-w-6xl mx-auto px-4 py-8 text-gray-600">Cargando reporte...</div>;
@@ -576,15 +578,42 @@ export const ReportesPage: React.FC = () => {
       {activeTab === 'graficos' && (
         <Card className="border border-slate-200 shadow-lg rounded-2xl" padding="lg">
           <div className="space-y-8">
-            <div className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-lg p-3">
-              <p className="text-sm font-medium text-slate-800">
-                {isWsConnected
-                  ? 'Tiempo real por WebSocket (sin polling)'
-                  : 'WebSocket no disponible. Usando polling de respaldo cada 2s'}
-              </p>
+            <div className="flex flex-col gap-3 bg-slate-50 border border-slate-200 rounded-lg p-3">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <p className="text-sm font-medium text-slate-800">
+                  {isWsConnected
+                    ? 'Tiempo real por WebSocket (sin polling)'
+                    : 'WebSocket no disponible. Usando polling de respaldo'}
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setChartRange('all')}
+                    className={`px-3 py-1.5 text-xs font-semibold rounded-md border transition-colors ${
+                      chartRange === 'all'
+                        ? 'bg-slate-900 text-white border-slate-900'
+                        : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+                    }`}
+                  >
+                    Todo
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setChartRange('last100')}
+                    className={`px-3 py-1.5 text-xs font-semibold rounded-md border transition-colors ${
+                      chartRange === 'last100'
+                        ? 'bg-slate-900 text-white border-slate-900'
+                        : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+                    }`}
+                  >
+                    Últimos 100
+                  </button>
+                </div>
+              </div>
               <p className="text-xs text-slate-600">
                 {lastRefresh ? `Última actualización: ${lastRefresh.toLocaleTimeString()}` : 'Sin actualizaciones'}
-                {' · '}Puntos: {chartSeries.totalPoints}
+                {' · '}Puntos visibles: {chartSeries.visiblePoints}
+                {' · '}Total: {chartSeries.totalPoints}
               </p>
             </div>
 
