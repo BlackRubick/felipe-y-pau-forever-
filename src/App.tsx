@@ -32,8 +32,8 @@ function App() {
                   <Route
                     path="/historial"
                     element={
-                      <PrNavbar />
-                        <otectedRoute>
+                      <ProtectedRoute>
+                        <Navbar />
                         <HistorialPage />
                       </ProtectedRoute>
                     }
@@ -42,8 +42,8 @@ function App() {
                   <Route
                     path="/reportes"
                     element={
-                      <PrNavbar />
-                        <otectedRoute>
+                      <ProtectedRoute>
+                        <Navbar />
                         <ReportesPage />
                       </ProtectedRoute>
                     }
@@ -57,8 +57,8 @@ function App() {
                   <Route
                     path="/pacientes"
                     element={
-                      <PrNavbar />
-                        <otectedRoute>
+                      <ProtectedRoute>
+                        <Navbar />
                         <PacientesPage />
                       </ProtectedRoute>
                     }
@@ -66,9 +66,9 @@ function App() {
 
                   <Route
                     path="/dispositivo"
-                    elemeNavbar />
-                        <nt={
+                    element={
                       <ProtectedRoute>
+                        <Navbar />
                         <DispositivoPage />
                       </ProtectedRoute>
                     }
