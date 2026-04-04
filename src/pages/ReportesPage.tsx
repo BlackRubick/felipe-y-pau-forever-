@@ -261,7 +261,7 @@ export const ReportesPage: React.FC = () => {
       } catch (error) {
         console.error('❌ Error en polling:', error);
       }
-    }, 2000);
+    }, 800);
 
     return () => clearInterval(interval);
   }, [activeTab, currentTest?.id, isWsConnected]);

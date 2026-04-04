@@ -66,12 +66,14 @@ unsigned long distanciaAcumuladaCm = 0;  // Nueva variable para acumular distanc
 unsigned long lastDisplayUpdate = 0;
 unsigned long lastJsonSend = 0;
 unsigned long lastServerSend = 0;
+unsigned long lastTestUpdateSend = 0;
 unsigned long lastWifiRetry = 0;
 unsigned long lastTestSync = 0;
 
 #define DISPLAY_INTERVAL          500
 #define JSON_INTERVAL             1000
-#define ENVIO_SERVIDOR_INTERVAL   5000
+#define ENVIO_SERVIDOR_INTERVAL   1000
+#define ACTUALIZAR_TEST_INTERVAL  3000
 #define WIFI_RETRY_INTERVAL       10000
 #define TEST_SYNC_INTERVAL        10000
 
@@ -243,7 +245,10 @@ void loop() {
       sincronizarTestActivo();
     } else {
       enviarLecturaServidor();
-      actualizarTest();
+      if (millis() - lastTestUpdateSend >= ACTUALIZAR_TEST_INTERVAL) {
+        lastTestUpdateSend = millis();
+        actualizarTest();
+      }
     }
   }
 }
