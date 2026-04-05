@@ -8,7 +8,8 @@
     "dev": "ts-node src/index.ts",
     "build": "tsc",
     "watch": "tsc --watch",
-    "cleanup:stale-tests": "node cleanup-stale-tests.js"
+    "cleanup:stale-tests": "node cleanup-stale-tests.js",
+    "fix:history-status": "node fix-completed-under-6min.js"
   },
   "dependencies": {
     "@types/pdfkit": "^0.17.5",
