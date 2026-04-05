@@ -129,7 +129,8 @@ class TestService {
   }
 
   async finalizeTest(testId: string): Promise<Test> {
-    return apiService.put<Test>(`/tests/${testId}/finalize`, {});
+    const backendTest = await apiService.put<any>(`/tests/${testId}/finalize`, {});
+    return mapBackendTestToFrontend(backendTest);
   }
 
   async pauseTest(testId: string): Promise<Test> {

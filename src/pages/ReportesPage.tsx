@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Card, Button } from '../components/common';
 import testService from '../services/testService';
@@ -289,6 +289,7 @@ export const ReportesPage: React.FC = () => {
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
   const [isWsConnected, setIsWsConnected] = useState(false);
   const [nowMs, setNowMs] = useState(() => Date.now());
+  const autoFinalizeRequestedRef = useRef<string | null>(null);
   const requestedTestId = searchParams.get('testId') || '';
 
   useEffect(() => {
@@ -488,8 +489,10 @@ export const ReportesPage: React.FC = () => {
     if (!currentTest) {
       return {
         elapsed: 0,
+        elapsedRaw: 0,
         remaining: TEST_TARGET_SECONDS,
         progress: 0,
+        shouldAutoFinalize: false,
         statusLabel: 'Sin prueba',
         statusClass: 'text-slate-600 bg-slate-100 border-slate-200',
       };
@@ -504,15 +507,18 @@ export const ReportesPage: React.FC = () => {
         ? Math.max(serverDuration, maxReadingSec, clockDuration)
         : Math.max(serverDuration, maxReadingSec);
 
-    const elapsed = Math.max(0, elapsedRaw);
+    const elapsed = Math.max(0, Math.min(elapsedRaw, TEST_TARGET_SECONDS));
     const remaining = Math.max(0, TEST_TARGET_SECONDS - elapsed);
-    const progress = Math.min(100, (Math.min(elapsed, TEST_TARGET_SECONDS) / TEST_TARGET_SECONDS) * 100);
+    const progress = Math.min(100, (elapsed / TEST_TARGET_SECONDS) * 100);
+    const shouldAutoFinalize = currentTest.status === 'en_progreso' && elapsedRaw >= TEST_TARGET_SECONDS;
 
     if (currentTest.status === 'completada') {
       return {
         elapsed,
+        elapsedRaw,
         remaining: 0,
         progress: 100,
+        shouldAutoFinalize: false,
         statusLabel: 'Completada',
         statusClass: 'text-emerald-800 bg-emerald-100 border-emerald-200',
       };
@@ -521,8 +527,10 @@ export const ReportesPage: React.FC = () => {
     if (currentTest.status === 'cancelada') {
       return {
         elapsed,
+        elapsedRaw,
         remaining,
         progress,
+        shouldAutoFinalize: false,
         statusLabel: 'Interrumpida',
         statusClass: 'text-amber-800 bg-amber-100 border-amber-200',
       };
@@ -530,12 +538,36 @@ export const ReportesPage: React.FC = () => {
 
     return {
       elapsed,
+      elapsedRaw,
       remaining,
       progress,
-      statusLabel: 'En progreso',
-      statusClass: 'text-sky-800 bg-sky-100 border-sky-200',
+      shouldAutoFinalize,
+      statusLabel: shouldAutoFinalize ? 'Completando...' : 'En progreso',
+      statusClass: shouldAutoFinalize
+        ? 'text-indigo-800 bg-indigo-100 border-indigo-200'
+        : 'text-sky-800 bg-sky-100 border-sky-200',
     };
   }, [currentTest, nowMs]);
+
+  useEffect(() => {
+    if (!currentTest?.id || !testProgress.shouldAutoFinalize) return;
+    if (autoFinalizeRequestedRef.current === currentTest.id) return;
+
+    autoFinalizeRequestedRef.current = currentTest.id;
+
+    const run = async () => {
+      try {
+        const updated = await testService.finalizeTest(currentTest.id);
+        setCurrentTest(updated);
+        setLastRefresh(new Date());
+      } catch (error) {
+        console.error('❌ Error auto-finalizando test en frontend:', error);
+        autoFinalizeRequestedRef.current = null;
+      }
+    };
+
+    run();
+  }, [currentTest?.id, testProgress.shouldAutoFinalize]);
 
   const chartSeries = useMemo(() => {
     const readings = currentTest?.readings || [];
