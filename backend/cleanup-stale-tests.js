@@ -32,15 +32,16 @@ async function cleanupStaleTests() {
 
     for (const test of rows) {
       const [countRows] = await connection.execute(
-        'SELECT COUNT(*) as total FROM test_readings WHERE testId = ?',
+        'SELECT COUNT(*) as total, COALESCE(MAX(tiempo), 0) as maxTiempo FROM test_readings WHERE testId = ?',
         [test.id]
       );
 
       const readingsCount = Number(countRows[0].total || 0);
-      const duration = Number(test.duracion || 0);
+      const maxTiempo = Number(countRows[0].maxTiempo || 0);
+      const duration = Math.max(Number(test.duracion || 0), maxTiempo);
 
       const finalStatus =
-        duration >= TEST_TARGET_SECONDS || readingsCount >= MIN_VALID_READINGS
+        duration >= TEST_TARGET_SECONDS && readingsCount >= MIN_VALID_READINGS
           ? 'completada'
           : 'cancelada';
 

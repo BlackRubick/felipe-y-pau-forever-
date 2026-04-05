@@ -631,16 +631,30 @@ router.put('/:id/finalize', async (req, res: Response) => {
     if (test.lecturas.length > 0) {
       const fcSum = test.lecturas.reduce((sum, l) => sum + l.frecuenciaCardiaca, 0);
       const spo2Sum = test.lecturas.reduce((sum, l) => sum + l.spo2, 0);
+      const maxReadingTime = test.lecturas.reduce((max, l) => Math.max(max, l.tiempo || 0), 0);
 
       test.fcPromedio = Math.round(fcSum / test.lecturas.length);
       test.spo2Promedio = Math.round(spo2Sum / test.lecturas.length);
       test.distanciaTotal = test.lecturas[test.lecturas.length - 1]?.distancia || 0;
-      test.duracion = test.lecturas.length; // En segundos
+      test.duracion = Math.max(test.duracion || 0, maxReadingTime, test.lecturas.length);
     }
+
+    const finalStatus = (test.duracion || 0) >= 360 ? 'completada' : 'cancelada';
+    const observacionesBase = (test.observaciones || '').trim();
+    const cancelReason =
+      finalStatus === 'cancelada'
+        ? `Finalizada antes de 6 minutos (duracion=${test.duracion || 0}s)`
+        : '';
 
     const updated = await db.updateTest(req.params.id, {
       ...test,
-      estado: 'completada',
+      estado: finalStatus,
+      observaciones:
+        cancelReason && !observacionesBase.includes('Finalizada antes de 6 minutos')
+          ? observacionesBase
+            ? `${observacionesBase} | ${cancelReason}`
+            : cancelReason
+          : observacionesBase,
     });
 
     if (currentActiveTestId === req.params.id) {
