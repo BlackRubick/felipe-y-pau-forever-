@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '../components/common';
 import testService from '../services/testService';
@@ -47,6 +48,7 @@ export const HistorialPage: React.FC = () => {
   const [filtro, setFiltro] = useState('');
   const [tests, setTests] = useState<TestRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -78,6 +80,41 @@ export const HistorialPage: React.FC = () => {
         return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const handleDeleteTest = async (testId: string, paciente: string) => {
+    const result = await Swal.fire({
+      title: 'Eliminar prueba',
+      text: `Se eliminara la prueba de ${paciente}. Esta accion no se puede deshacer.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Si, eliminar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#dc2626',
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      setDeletingId(testId);
+      await testService.deleteTest(testId);
+      setTests((prev) => prev.filter((test) => test.id !== testId));
+      await Swal.fire({
+        title: 'Eliminada',
+        text: 'La prueba fue eliminada del historial.',
+        icon: 'success',
+        timer: 1600,
+        showConfirmButton: false,
+      });
+    } catch (error) {
+      await Swal.fire({
+        title: 'No se pudo eliminar',
+        text: 'Intenta nuevamente.',
+        icon: 'error',
+      });
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -115,6 +152,7 @@ export const HistorialPage: React.FC = () => {
                       <th className="px-4 py-3 text-center font-semibold text-slate-900">Duración</th>
                       <th className="px-4 py-3 text-center font-semibold text-slate-900">Distancia</th>
                       <th className="px-4 py-3 text-center font-semibold text-slate-900">Estado</th>
+                      <th className="px-4 py-3 text-center font-semibold text-slate-900">Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -139,6 +177,19 @@ export const HistorialPage: React.FC = () => {
                           >
                             {test.estado.charAt(0).toUpperCase() + test.estado.slice(1)}
                           </span>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              void handleDeleteTest(test.id, test.paciente);
+                            }}
+                            disabled={deletingId === test.id}
+                            className="inline-flex items-center justify-center rounded-lg bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 border border-red-200 hover:bg-red-100 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                          >
+                            {deletingId === test.id ? 'Eliminando...' : 'Eliminar'}
+                          </button>
                         </td>
                       </tr>
                     ))}

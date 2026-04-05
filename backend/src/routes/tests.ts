@@ -669,8 +669,8 @@ router.put('/:id/finalize', async (req, res: Response) => {
 
 router.delete('/:id', async (req, res: Response) => {
   try {
-    const updated = await db.updateTest(req.params.id, { estado: 'cancelada' });
-    if (!updated) {
+    const deleted = await db.deleteTest(req.params.id);
+    if (!deleted) {
       res.status(404).json({ error: 'Test not found' });
       return;
     }
@@ -679,7 +679,7 @@ router.delete('/:id', async (req, res: Response) => {
       currentActiveTestId = null;
     }
 
-    res.json(updated);
+    res.status(204).send();
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });
   }
