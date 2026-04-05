@@ -309,21 +309,6 @@ export const NewTestPage: React.FC = () => {
             <form onSubmit={handleStartTest} className="space-y-6">
               <h2 className="text-2xl font-bold text-slate-900">Información del Paciente</h2>
 
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.18em] text-slate-500 font-semibold mb-1">
-                      Escala de Borg
-                    </p>
-                    <p className="text-sm text-slate-600">
-                      0 = reposo, 10 = esfuerzo extremo
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-3xl font-black text-slate-900 leading-none">{values.escalaBorg}</p>
-                    <p className="text-xs font-semibold text-slate-500 mt-1">/10</p>
-                  </div>
-                </div>
-
                 <Input
                   label="Nombre Completo"
                   name="nombreCompleto"
@@ -356,23 +341,6 @@ export const NewTestPage: React.FC = () => {
                     onBlur={handleBlur}
                     placeholder="1"
                   />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Escala de Borg (0 a 10)</label>
-                  <select
-                    name="escalaBorg"
-                    value={values.escalaBorg}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    className="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-800"
-                  >
-                    {Array.from({ length: 11 }).map((_, index) => (
-                      <option key={index} value={index}>
-                        {index}
-                      </option>
-                    ))}
-                  </select>
                 </div>
 
                 <Input
@@ -490,6 +458,32 @@ export const NewTestPage: React.FC = () => {
                     rows={4}
                     className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-800"
                   />
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-900 mb-1">Escala de Borg</label>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-3xl font-black text-slate-900 leading-none">{values.escalaBorg}</p>
+                      <p className="text-xs font-semibold text-slate-500 mt-1">/10</p>
+                    </div>
+                  </div>
+
+                  <select
+                    name="escalaBorg"
+                    value={values.escalaBorg}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    className="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-800"
+                  >
+                    {Array.from({ length: 11 }).map((_, index) => (
+                      <option key={index} value={index}>
+                        {index}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
               <Button type="submit" variant="primary" fullWidth className="!bg-slate-900 hover:!bg-slate-800">
