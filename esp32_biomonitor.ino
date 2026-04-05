@@ -581,15 +581,6 @@ bool obtenerTestIdDesdeLista(String& outTestId) {
     }
   }
 
-  // Ultimo recurso: tomar el primer test disponible si no hay estado en_progreso
-  if (arr.size() > 0) {
-    const char* id = arr[0]["id"] | "";
-    if (strlen(id) > 0) {
-      outTestId = String(id);
-      return true;
-    }
-  }
-
   return false;
 }
 
@@ -630,6 +621,19 @@ void sincronizarTestActivo() {
       Serial.println("Test activo sincronizado: " + testIdActual);
     }
     return;
+  }
+
+  if (testFinalizado || testIdActual.length() > 0) {
+    // Ya no hay prueba activa; soltamos el test anterior para que el siguiente
+    // en_progreso pueda sincronizarse sin quedarse pegado al completado.
+    testIdActual = "";
+    tiempoInicioTest = 0;
+    testFinalizado = false;
+    estadoFinalTest = "";
+    lecturasValidas = 0;
+    Latido_Anterior = 0;
+    irHistoriaIniciada = false;
+    Serial.println("No hay test activo. Esperando el siguiente en_progreso...");
   }
 
   Serial.println("No hay test activo todavia. Esperando a que se inicie uno desde el frontend...");

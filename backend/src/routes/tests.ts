@@ -47,16 +47,8 @@ const resolveDeviceCurrentTest = async (): Promise<Test | null> => {
   const active = await resolveActiveTest();
   if (active) return active;
 
-  const allTests = await db.getAllTests();
-  const candidate = allTests
-    .filter((test) => test.estado !== 'cancelada')
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0] || null;
-
-  if (candidate) {
-    currentActiveTestId = candidate.id;
-  }
-
-  return candidate;
+  currentActiveTestId = null;
+  return null;
 };
 
 router.post('/', async (req, res: Response) => {
