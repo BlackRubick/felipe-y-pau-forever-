@@ -210,6 +210,7 @@ interface ReportData {
   paciente: string;
   edad: number;
   sexo: string;
+  borg: number;
   enfermedad: string;
   fecha: string;
   duracion: string;
@@ -258,6 +259,7 @@ const toReportData = (test: Test): ReportData => {
     paciente: test.testConfig.pacienteNombre,
     edad: test.testConfig.pacienteEdad,
     sexo: test.testConfig.sexo === 'M' ? 'Masculino' : test.testConfig.sexo === 'F' ? 'Femenino' : 'Otro',
+    borg: test.testConfig.escalaBorg ?? 0,
     enfermedad: test.testConfig.tipoCirugia,
     fecha: new Date(test.createdAt || test.startTime).toISOString().split('T')[0],
     duracion: formatDuration(test.duration),
@@ -653,6 +655,10 @@ export const ReportesPage: React.FC = () => {
                 <p className="font-semibold text-slate-900">{report.sexo}</p>
               </div>
               <div>
+                <p className="text-slate-500">Borg</p>
+                <p className="font-semibold text-slate-900">{report.borg}/10</p>
+              </div>
+              <div>
                 <p className="text-slate-500">Diagnóstico</p>
                 <p className="font-semibold text-slate-900">{report.enfermedad}</p>
               </div>
@@ -820,6 +826,10 @@ export const ReportesPage: React.FC = () => {
           <Card className="border border-slate-200 shadow-lg rounded-2xl" padding="lg">
             <h3 className="text-xl font-bold text-slate-900 mb-6">Datos Basales</h3>
             <div className="space-y-4">
+              <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-200">
+                <span className="text-slate-700">Escala de Borg</span>
+                <span className="text-2xl font-bold text-slate-900">{report.borg}/10</span>
+              </div>
               <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-200">
                 <span className="text-slate-700">Presión Sanguínea Inicial</span>
                 <span className="text-xl font-bold text-slate-900">{report.presionInicial}</span>

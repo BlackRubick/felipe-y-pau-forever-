@@ -52,6 +52,7 @@ async function createTables() {
         numeroCaminata INT,
         fechaCaminata DATE,
         enfermedadPulmonar VARCHAR(100),
+        escalaBorg INT,
         presionSanguineaInicial VARCHAR(20),
         oxigenoSupplementario BOOLEAN,
         estado VARCHAR(50),
@@ -66,6 +67,15 @@ async function createTables() {
         INDEX idx_fecha (fecha)
       )
     `);
+
+    try {
+      await connection.execute('ALTER TABLE tests ADD COLUMN escalaBorg INT NULL');
+      console.log('✅ Columna escalaBorg agregada a tests');
+    } catch (error: any) {
+      if (error?.errno !== 1060) {
+        throw error;
+      }
+    }
 
 
     await connection.execute(`
@@ -211,10 +221,10 @@ export class Database {
       const query = `INSERT INTO tests (
           id, paciente_id, paciente_nombreCompleto, paciente_edad, paciente_altura,
           paciente_peso, paciente_sexo, paciente_raza, medicoResponsable, fecha,
-          numeroCaminata, fechaCaminata, enfermedadPulmonar, presionSanguineaInicial,
+          numeroCaminata, fechaCaminata, enfermedadPulmonar, escalaBorg, presionSanguineaInicial,
           oxigenoSupplementario, estado, duracion, distanciaTotal, fcPromedio,
           spo2Promedio, observaciones
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
       
       await connection.execute(query as any, [
         test.id,
@@ -230,6 +240,7 @@ export class Database {
         safe(test.numeroCaminata),
         safe(test.fechaCaminata),
         safe(test.enfermedadPulmonar),
+        safe(test.escalaBorg),
         safe(test.presionSanguineaInicial),
         safe(test.oxigenoSupplementario),
         safe(test.estado),
@@ -571,6 +582,7 @@ export class Database {
       numeroCaminata: row.numeroCaminata,
       fechaCaminata: row.fechaCaminata,
       enfermedadPulmonar: row.enfermedadPulmonar,
+      escalaBorg: row.escalaBorg,
       presionSanguineaInicial: row.presionSanguineaInicial,
       oxigenoSupplementario: row.oxigenoSupplementario,
       estado: row.estado,

@@ -6,8 +6,7 @@ import { useTest } from '../context/TestContext';
 import { useForm } from '../hooks';
 import { Button, Input, Card, LoadingSpinner } from '../components/common';
 import { PatientFormData, TipoEnfermedadPulmonar, TestConfig } from '../types';
-import { validateAge, validateHeight, validateDateNotFuture } from '../utils/validation';
-import { calculateDaysPostOp } from '../utils/formatting';
+import { validateAge, validateHeight } from '../utils/validation';
 import { SURGERY_TYPE_LABELS, TEST_DURATION_SECONDS } from '../constants';
 import testService from '../services/testService';
 
@@ -82,6 +81,7 @@ export const NewTestPage: React.FC = () => {
       altura: 0,
       peso: 0,
       sexo: 'M',
+      escalaBorg: 0,
       presionSanguineaInicial: '',
       oxigenoSupplementario: 'No',
       tipoCirugia: TipoEnfermedadPulmonar.EPOC,
@@ -172,15 +172,6 @@ export const NewTestPage: React.FC = () => {
       ? 'Altura debe estar entre 50 y 250 cm'
       : '';
 
-  const dateError =
-    touched.fechaOperacion &&
-    values.fechaOperacion &&
-    !validateDateNotFuture(values.fechaOperacion)
-      ? 'La fecha no puede ser en el futuro'
-      : '';
-
-  const daysPostOp = calculateDaysPostOp(values.fechaOperacion);
-
   const handleStartTest = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -214,16 +205,6 @@ export const NewTestPage: React.FC = () => {
       return;
     }
 
-    if (!values.fechaOperacion || dateError) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Fecha inválida',
-        text: 'Por favor ingresa una fecha válida',
-        confirmButtonColor: '#3085d6',
-      });
-      return;
-    }
-
     try {
       const config: TestConfig = {
         pacienteId: buildPatientId(),
@@ -234,8 +215,9 @@ export const NewTestPage: React.FC = () => {
         peso: values.peso || undefined,
         raza: values.raza || undefined,
         sexo: values.sexo,
+        escalaBorg: values.escalaBorg,
         tipoCirugia: values.tipoCirugia,
-        fechaOperacion: values.fechaOperacion,
+        fechaOperacion: values.fechaCaminata,
         fechaCaminata: values.fechaCaminata,
         numeroCaminata: values.numeroCaminata || 1,
         presionSanguineaInicial: values.presionSanguineaInicial || undefined,
@@ -322,11 +304,25 @@ export const NewTestPage: React.FC = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <Card className="border border-slate-200 shadow-lg rounded-2xl" padding="lg">
-              <form onSubmit={handleStartTest} className="space-y-6">
-                <h2 className="text-2xl font-bold text-slate-900">Información del Paciente</h2>
+        <div className="max-w-4xl mx-auto">
+          <Card className="border border-slate-200 shadow-lg rounded-2xl" padding="lg">
+            <form onSubmit={handleStartTest} className="space-y-6">
+              <h2 className="text-2xl font-bold text-slate-900">Información del Paciente</h2>
+
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.18em] text-slate-500 font-semibold mb-1">
+                      Escala de Borg
+                    </p>
+                    <p className="text-sm text-slate-600">
+                      0 = reposo, 10 = esfuerzo extremo
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-3xl font-black text-slate-900 leading-none">{values.escalaBorg}</p>
+                    <p className="text-xs font-semibold text-slate-500 mt-1">/10</p>
+                  </div>
+                </div>
 
                 <Input
                   label="Nombre Completo"
@@ -360,6 +356,23 @@ export const NewTestPage: React.FC = () => {
                     onBlur={handleBlur}
                     placeholder="1"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Escala de Borg (0 a 10)</label>
+                  <select
+                    name="escalaBorg"
+                    value={values.escalaBorg}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    className="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-800"
+                  >
+                    {Array.from({ length: 11 }).map((_, index) => (
+                      <option key={index} value={index}>
+                        {index}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <Input
@@ -464,24 +477,7 @@ export const NewTestPage: React.FC = () => {
                       ))}
                     </select>
                   </div>
-                  <Input
-                    label="Fecha de Operación"
-                    type="date"
-                    name="fechaOperacion"
-                    value={values.fechaOperacion}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    error={dateError}
-                  />
                 </div>
-
-                {values.fechaOperacion && !dateError && (
-                  <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
-                    <p className="text-sm text-slate-800">
-                      <strong>Días post-operatorio:</strong> {daysPostOp} días
-                    </p>
-                  </div>
-                )}
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Observaciones Previas (opcional)</label>
@@ -496,46 +492,11 @@ export const NewTestPage: React.FC = () => {
                   />
                 </div>
 
-                <Button type="submit" variant="primary" fullWidth className="!bg-slate-900 hover:!bg-slate-800">
-                  Iniciar Prueba
-                </Button>
-              </form>
-            </Card>
-          </div>
-
-          <div className="space-y-6">
-            <Card className="border border-slate-200 shadow-lg rounded-2xl" padding="lg">
-              <div className="space-y-4">
-                <h3 className="font-bold text-slate-900">Información Útil</h3>
-
-                <div className="space-y-2 text-sm">
-                  <div>
-                    <p className="font-semibold text-slate-700">Duración de Prueba</p>
-                    <p className="text-slate-600">
-                      {TEST_DURATION_SECONDS / 60} minutos (extensible 2 min más)
-                    </p>
-                  </div>
-
-                  <div>
-                    <p className="font-semibold text-slate-700">Datos Capturados</p>
-                    <ul className="list-disc list-inside text-slate-600 space-y-1">
-                      <li>Frecuencia cardíaca (BPM)</li>
-                      <li>Saturación O2 (%)</li>
-                      <li>Pasos y distancia</li>
-                      <li>Alertas en tiempo real</li>
-                    </ul>
-                  </div>
-
-                  <div>
-                    <p className="font-semibold text-slate-700">Post-Prueba</p>
-                    <p className="text-slate-600">
-                      Reporte automático con gráficos, estadísticas y opciones de exportación.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          </div>
+              <Button type="submit" variant="primary" fullWidth className="!bg-slate-900 hover:!bg-slate-800">
+                Iniciar Prueba
+              </Button>
+            </form>
+          </Card>
         </div>
       </div>
     </div>

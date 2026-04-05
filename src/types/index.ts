@@ -71,6 +71,7 @@ export interface TestConfig {
   peso?: number;
   raza?: string;
   sexo: 'M' | 'F' | 'O';
+  escalaBorg?: number;
   tipoCirugia: TipoCirugia;
   fechaOperacion: string;
   fechaCaminata?: string;
@@ -298,6 +299,7 @@ export interface PatientFormData {
   altura: number;
   peso?: number;
   sexo: 'M' | 'F' | 'O';
+  escalaBorg: number;
   presionSanguineaInicial?: string;
   oxigenoSupplementario: 'Si' | 'No';
   tipoCirugia: TipoCirugia;

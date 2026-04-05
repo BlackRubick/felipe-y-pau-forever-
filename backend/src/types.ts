@@ -37,6 +37,7 @@ export interface Test {
   numeroCaminata?: number;
   fechaCaminata: Date;
   enfermedadPulmonar: string;
+  escalaBorg?: number;
   presionSanguineaInicial?: string;
   oxigenoSupplementario: boolean;
   estado: 'pendiente' | 'en_progreso' | 'completada' | 'cancelada';
@@ -84,6 +85,7 @@ export interface CreateTestRequest {
   enfermedadPulmonar: string;
   numeroCaminata?: number;
   fechaCaminata: string;
+  escalaBorg?: number;
   presionSanguineaInicial?: string;
   oxigenoSupplementario: boolean;
   observacionesPrevias?: string;
