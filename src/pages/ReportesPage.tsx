@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import Swal from 'sweetalert2';
 import { Card, Button } from '../components/common';
 import testService from '../services/testService';
 import { Test } from '../types';
@@ -290,6 +291,7 @@ export const ReportesPage: React.FC = () => {
   const [isWsConnected, setIsWsConnected] = useState(false);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const autoFinalizeRequestedRef = useRef<string | null>(null);
+  const completionAlertShownRef = useRef<Set<string>>(new Set());
   const requestedTestId = searchParams.get('testId') || '';
 
   useEffect(() => {
@@ -568,6 +570,23 @@ export const ReportesPage: React.FC = () => {
 
     run();
   }, [currentTest?.id, testProgress.shouldAutoFinalize]);
+
+  useEffect(() => {
+    if (!currentTest?.id) return;
+    if (currentTest.status !== 'completada') return;
+    if (testProgress.elapsedRaw < TEST_TARGET_SECONDS) return;
+    if (completionAlertShownRef.current.has(currentTest.id)) return;
+
+    completionAlertShownRef.current.add(currentTest.id);
+
+    void Swal.fire({
+      icon: 'success',
+      title: 'Prueba finalizada',
+      text: 'Se cumplieron los 6 minutos del test correctamente.',
+      confirmButtonText: 'Entendido',
+      confirmButtonColor: '#0f766e',
+    });
+  }, [currentTest?.id, currentTest?.status, testProgress.elapsedRaw]);
 
   const chartSeries = useMemo(() => {
     const readings = currentTest?.readings || [];
