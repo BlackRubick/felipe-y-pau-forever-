@@ -11,6 +11,14 @@ import {
 const mapBackendTestToFrontend = (backendTest: any): Test => {
   const createdAt = backendTest.createdAt ? new Date(backendTest.createdAt).toISOString() : new Date().toISOString();
   const fecha = backendTest.fecha ? new Date(backendTest.fecha).toISOString() : createdAt;
+  // startTime debe usar timestamp real (createdAt) para evitar que nuevos tests
+  // arranquen con hora 00:00:00 y se consideren "ya vencidos".
+  const startTime =
+    backendTest.createdAt
+      ? new Date(backendTest.createdAt).toISOString()
+      : backendTest.startTime
+        ? new Date(backendTest.startTime).toISOString()
+        : fecha;
   const backendReadings = Array.isArray(backendTest.lecturas)
     ? backendTest.lecturas
     : Array.isArray(backendTest.readings)
@@ -44,7 +52,7 @@ const mapBackendTestToFrontend = (backendTest: any): Test => {
       medicoResponsable: backendTest.medicoResponsable || '',
     },
     status: backendTest.estado || 'en_progreso',
-    startTime: fecha,
+    startTime,
     endTime: undefined,
     duration: backendTest.duracion || 0,
     readings: backendReadings.map((reading: any, index: number) => ({
