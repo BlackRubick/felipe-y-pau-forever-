@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import { useAuth } from '../context/AuthContext';
@@ -9,6 +9,7 @@ import { PatientFormData, TipoEnfermedadPulmonar, TestConfig } from '../types';
 import { validateAge, validateHeight, validateDateNotFuture } from '../utils/validation';
 import { calculateDaysPostOp } from '../utils/formatting';
 import { SURGERY_TYPE_LABELS, TEST_DURATION_SECONDS } from '../constants';
+import testService from '../services/testService';
 
 export const NewTestPage: React.FC = () => {
   const navigate = useNavigate();
@@ -16,6 +17,15 @@ export const NewTestPage: React.FC = () => {
   const { user } = useAuth();
   const { createTest, isLoading } = useTest();
   const appliedPrefillRef = useRef(false);
+  const [activeTest, setActiveTest] = useState<null | { id: string; startTime: string; duration: number; status: string }>(null);
+  const [nowMs, setNowMs] = useState(() => Date.now());
+
+  const formatClock = (seconds: number) => {
+    const safe = Math.max(0, Math.floor(seconds));
+    const mins = Math.floor(safe / 60);
+    const secs = safe % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
 
   type PrefillPatientData = {
     pacienteId?: string;
@@ -93,6 +103,62 @@ export const NewTestPage: React.FC = () => {
 
     appliedPrefillRef.current = true;
   }, [prefillPatient, setFieldValue]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const fetchActiveTest = async () => {
+      try {
+        const tests = await testService.getAllTests();
+        const running = tests
+          .filter((t) => t.status === 'en_progreso')
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+
+        if (!mounted) return;
+
+        if (running) {
+          setActiveTest({
+            id: running.id,
+            startTime: running.startTime,
+            duration: running.duration || 0,
+            status: running.status,
+          });
+        } else {
+          setActiveTest(null);
+        }
+      } catch {
+        if (mounted) setActiveTest(null);
+      }
+    };
+
+    fetchActiveTest();
+    const poll = setInterval(fetchActiveTest, 4000);
+    const ticker = setInterval(() => setNowMs(Date.now()), 1000);
+
+    return () => {
+      mounted = false;
+      clearInterval(poll);
+      clearInterval(ticker);
+    };
+  }, []);
+
+  const activeTestProgress = useMemo(() => {
+    if (!activeTest) {
+      return {
+        elapsed: 0,
+        remaining: TEST_DURATION_SECONDS,
+        progress: 0,
+      };
+    }
+
+    const startMs = new Date(activeTest.startTime).getTime();
+    const elapsedByClock = Number.isFinite(startMs) ? Math.max(0, Math.floor((nowMs - startMs) / 1000)) : 0;
+    const elapsed = Math.max(activeTest.duration || 0, elapsedByClock);
+    const remaining = Math.max(0, TEST_DURATION_SECONDS - elapsed);
+    const progress = Math.min(100, (Math.min(elapsed, TEST_DURATION_SECONDS) / TEST_DURATION_SECONDS) * 100);
+
+    return { elapsed, remaining, progress };
+  }, [activeTest, nowMs]);
 
 
     
@@ -204,6 +270,49 @@ export const NewTestPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-100 p-4 sm:p-6 lg:p-8">
+      {activeTest && (
+        <div className="fixed z-40 right-4 bottom-4 w-[320px] max-w-[calc(100vw-2rem)] rounded-2xl border border-sky-200 bg-white/95 backdrop-blur shadow-2xl p-4">
+          <div className="flex items-start justify-between gap-2 mb-3">
+            <div>
+              <p className="text-xs uppercase tracking-[0.18em] text-sky-600 font-semibold">Test activo</p>
+              <p className="text-sm font-bold text-slate-900">Cronómetro en progreso</p>
+            </div>
+            <span className="text-[11px] font-semibold px-2 py-1 rounded-full bg-sky-100 text-sky-800 border border-sky-200">
+              En vivo
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 mb-3">
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-2">
+              <p className="text-[11px] text-slate-500">Transcurrido</p>
+              <p className="text-xl font-bold text-slate-900">{formatClock(activeTestProgress.elapsed)}</p>
+            </div>
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-2">
+              <p className="text-[11px] text-slate-500">Restante</p>
+              <p className="text-xl font-bold text-slate-900">{formatClock(activeTestProgress.remaining)}</p>
+            </div>
+          </div>
+
+          <div className="w-full h-2.5 rounded-full bg-slate-200 overflow-hidden mb-2">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-sky-500 to-indigo-500 transition-all duration-500"
+              style={{ width: `${activeTestProgress.progress}%` }}
+            />
+          </div>
+
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[11px] text-slate-600">{activeTestProgress.progress.toFixed(1)}% completado</p>
+            <button
+              type="button"
+              onClick={() => navigate(`/reportes?testId=${encodeURIComponent(activeTest.id)}&tab=graficos`)}
+              className="text-xs font-semibold text-sky-700 hover:text-sky-900"
+            >
+              Ver monitoreo
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="rounded-2xl bg-slate-900 text-white p-6 sm:p-8 shadow-xl border border-slate-800">
           <p className="text-xs uppercase tracking-[0.22em] text-slate-400 mb-3">Nueva evaluación</p>

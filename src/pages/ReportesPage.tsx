@@ -16,6 +16,15 @@ interface LineChartPoint {
   y: number;
 }
 
+const TEST_TARGET_SECONDS = 360;
+
+const formatClock = (seconds: number) => {
+  const safe = Math.max(0, seconds);
+  const mins = Math.floor(safe / 60);
+  const secs = safe % 60;
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+};
+
 const getRealtimeWsUrl = (testId: string) => {
   const wsBase = process.env.REACT_APP_WS_URL || 'ws://localhost:3001';
   return `${wsBase}/ws/tests?testId=${encodeURIComponent(testId)}`;
@@ -279,7 +288,13 @@ export const ReportesPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
   const [isWsConnected, setIsWsConnected] = useState(false);
+  const [nowMs, setNowMs] = useState(() => Date.now());
   const requestedTestId = searchParams.get('testId') || '';
+
+  useEffect(() => {
+    const interval = setInterval(() => setNowMs(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const load = async () => {
@@ -469,6 +484,59 @@ export const ReportesPage: React.FC = () => {
 
   const report = useMemo(() => (currentTest ? toReportData(currentTest) : null), [currentTest]);
 
+  const testProgress = useMemo(() => {
+    if (!currentTest) {
+      return {
+        elapsed: 0,
+        remaining: TEST_TARGET_SECONDS,
+        progress: 0,
+        statusLabel: 'Sin prueba',
+        statusClass: 'text-slate-600 bg-slate-100 border-slate-200',
+      };
+    }
+
+    const maxReadingSec = currentTest.readings.reduce((max, r) => Math.max(max, r.timestamp || 0), 0);
+    const serverDuration = currentTest.duration || 0;
+    const startMs = new Date(currentTest.startTime).getTime();
+    const clockDuration = Number.isFinite(startMs) ? Math.max(0, Math.floor((nowMs - startMs) / 1000)) : 0;
+    const elapsedRaw =
+      currentTest.status === 'en_progreso'
+        ? Math.max(serverDuration, maxReadingSec, clockDuration)
+        : Math.max(serverDuration, maxReadingSec);
+
+    const elapsed = Math.max(0, elapsedRaw);
+    const remaining = Math.max(0, TEST_TARGET_SECONDS - elapsed);
+    const progress = Math.min(100, (Math.min(elapsed, TEST_TARGET_SECONDS) / TEST_TARGET_SECONDS) * 100);
+
+    if (currentTest.status === 'completada') {
+      return {
+        elapsed,
+        remaining: 0,
+        progress: 100,
+        statusLabel: 'Completada',
+        statusClass: 'text-emerald-800 bg-emerald-100 border-emerald-200',
+      };
+    }
+
+    if (currentTest.status === 'cancelada') {
+      return {
+        elapsed,
+        remaining,
+        progress,
+        statusLabel: 'Interrumpida',
+        statusClass: 'text-amber-800 bg-amber-100 border-amber-200',
+      };
+    }
+
+    return {
+      elapsed,
+      remaining,
+      progress,
+      statusLabel: 'En progreso',
+      statusClass: 'text-sky-800 bg-sky-100 border-sky-200',
+    };
+  }, [currentTest, nowMs]);
+
   const chartSeries = useMemo(() => {
     const readings = currentTest?.readings || [];
     const series = readings.map((r, i) => ({
@@ -547,6 +615,45 @@ export const ReportesPage: React.FC = () => {
             <p className="text-sm font-semibold mb-1">Resultado</p>
             <p className="text-2xl font-bold capitalize">{report.resultado}</p>
           </div>
+        </div>
+      </Card>
+
+      <Card className="mb-6 border border-slate-200 shadow-lg rounded-2xl" padding="lg">
+        <div className="flex items-start justify-between gap-4 flex-wrap mb-4">
+          <div>
+            <h3 className="text-lg font-bold text-slate-900">Progreso del test de 6 minutos</h3>
+            <p className="text-sm text-slate-600">Seguimiento en tiempo real del tiempo transcurrido y restante</p>
+          </div>
+          <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${testProgress.statusClass}`}>
+            {testProgress.statusLabel}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-xs uppercase tracking-wide text-slate-500 mb-1">Tiempo transcurrido</p>
+            <p className="text-3xl font-bold text-slate-900">{formatClock(testProgress.elapsed)}</p>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-xs uppercase tracking-wide text-slate-500 mb-1">Tiempo restante</p>
+            <p className="text-3xl font-bold text-slate-900">{formatClock(testProgress.remaining)}</p>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-xs uppercase tracking-wide text-slate-500 mb-1">Meta</p>
+            <p className="text-3xl font-bold text-slate-900">6:00</p>
+          </div>
+        </div>
+
+        <div>
+          <div className="w-full h-3 rounded-full bg-slate-200 overflow-hidden">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-sky-500 via-indigo-500 to-emerald-500 transition-all duration-500"
+              style={{ width: `${testProgress.progress}%` }}
+            />
+          </div>
+          <p className="mt-2 text-xs text-slate-600">
+            Avance: {testProgress.progress.toFixed(1)}% del objetivo de 6 minutos
+          </p>
         </div>
       </Card>
 

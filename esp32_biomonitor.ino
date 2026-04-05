@@ -84,6 +84,9 @@ unsigned long lastTestSync = 0;
 #define ACTUALIZAR_TEST_INTERVAL  3000
 #define WIFI_RETRY_INTERVAL       10000
 #define TEST_SYNC_INTERVAL        10000
+#define TEST_OBJETIVO_SEGUNDOS    360
+#define TEST_MAX_EXTRA_SEGUNDOS   120
+#define MIN_LECTURAS_VALIDAS      30
 
 const char* DEVICE_ID = "esp32_01";
 
@@ -94,6 +97,9 @@ const char* FORCED_TEST_ID = "";
 // ================== TEST ==================
 String testIdActual = "";
 unsigned long tiempoInicioTest = 0;
+bool testFinalizado = false;
+String estadoFinalTest = "";
+unsigned long lecturasValidas = 0;
 
 // ================== PROTOTIPOS ==================
 float calcularSpO2(uint32_t *red, uint32_t *ir, int length);
@@ -111,6 +117,7 @@ bool  obtenerTestIdDesdeEndpoint(const String& endpoint, String& outTestId);
 bool  obtenerTestIdDesdeLista(String& outTestId);
 void  enviarLecturaServidor();
 void  actualizarTest();
+void  finalizarTest(const String& estado, const String& observacion);
 String normalizarTestId(const String& input);
 void  registrarLatido(unsigned long ahoraLatido, const char* fuente);
 
@@ -167,6 +174,40 @@ void registrarLatido(unsigned long ahoraLatido, const char* fuente) {
     Serial.print(" bpmAvg=");
     Serial.println(Latidos_Promedio, 1);
   }
+}
+
+void finalizarTest(const String& estado, const String& observacion) {
+  if (testIdActual.length() == 0 || WiFi.status() != WL_CONNECTED || testFinalizado) return;
+
+  HTTPClient http;
+  String url = String(serverURL) + "/api/tests/" + testIdActual;
+  if (!prepararHttp(http, url)) return;
+
+  unsigned long duracionSec = (millis() - tiempoInicioTest) / 1000;
+  int bpmFinal = obtenerBpmActual();
+
+  DynamicJsonDocument doc(384);
+  doc["duracion"] = duracionSec;
+  doc["distanciaTotal"] = distanciaAcumuladaCm / 100;
+  doc["fcPromedio"] = bpmFinal;
+  doc["spo2Promedio"] = hayDedo ? (int)spo2 : 0;
+  doc["estado"] = estado;
+  doc["observaciones"] = observacion;
+
+  String json;
+  serializeJson(doc, json);
+
+  int httpResponseCode = http.PUT(json);
+  if (httpResponseCode == 200) {
+    testFinalizado = true;
+    estadoFinalTest = estado;
+    Serial.print("Test finalizado automaticamente: ");
+    Serial.println(estado);
+  } else {
+    logHttpError(http, httpResponseCode, "finalizar test");
+  }
+
+  http.end();
 }
 
 String normalizarTestId(const String& input) {
@@ -259,6 +300,33 @@ void loop() {
   if (millis() - lastTestSync >= TEST_SYNC_INTERVAL) {
     lastTestSync = millis();
     sincronizarTestActivo();
+  }
+
+  unsigned long elapsedSec = tiempoInicioTest > 0 ? (millis() - tiempoInicioTest) / 1000 : 0;
+
+  // Regla de ciclo de vida del test:
+  // - Si llega a 6:00 con lecturas suficientes -> completada y se detiene.
+  // - Si se extiende demasiado sin lecturas suficientes -> cancelada (interrumpida/incompleta).
+  if (!testFinalizado && testIdActual.length() > 0) {
+    if (elapsedSec >= TEST_OBJETIVO_SEGUNDOS && lecturasValidas >= MIN_LECTURAS_VALIDAS) {
+      finalizarTest("completada", "Finalizacion automatica al cumplir 6 minutos con lecturas validas");
+    } else if (elapsedSec >= (TEST_OBJETIVO_SEGUNDOS + TEST_MAX_EXTRA_SEGUNDOS) && lecturasValidas < MIN_LECTURAS_VALIDAS) {
+      finalizarTest("cancelada", "Test interrumpida: no se lograron lecturas validas suficientes");
+    }
+  }
+
+  if (testFinalizado) {
+    if (millis() - lastDisplayUpdate >= DISPLAY_INTERVAL) {
+      lastDisplayUpdate = millis();
+      pantallaMonitor();
+    }
+
+    if (millis() - lastJsonSend >= JSON_INTERVAL) {
+      lastJsonSend = millis();
+      enviarJSON();
+    }
+
+    return;
   }
 
   long Valor_IR   = SensorMax30102.getIR();
@@ -536,6 +604,9 @@ void sincronizarTestActivo() {
     if (forced != testIdActual) {
       testIdActual = forced;
       tiempoInicioTest = millis();
+      testFinalizado = false;
+      estadoFinalTest = "";
+      lecturasValidas = 0;
       Serial.println("Test forzado manualmente: " + testIdActual);
     }
     return;
@@ -553,6 +624,9 @@ void sincronizarTestActivo() {
     if (nuevoTestId != testIdActual) {
       testIdActual = nuevoTestId;
       tiempoInicioTest = millis();
+      testFinalizado = false;
+      estadoFinalTest = "";
+      lecturasValidas = 0;
       Serial.println("Test activo sincronizado: " + testIdActual);
     }
     return;
@@ -573,6 +647,10 @@ void enviarLecturaServidor() {
 
   int bpmEnviar = 0;
   bpmEnviar = obtenerBpmActual();
+
+  if (bpmEnviar > 0 || (hayDedo && spo2 > 0)) {
+    lecturasValidas++;
+  }
 
   DynamicJsonDocument doc(256);
   doc["frecuenciaCardiaca"] = bpmEnviar;
@@ -614,6 +692,7 @@ void actualizarTest() {
   doc["fcPromedio"]   = bpmPromedioEnviar;
   doc["spo2Promedio"] = hayDedo ? (int)spo2 : 0;
   doc["estado"]       = "en_progreso";
+  doc["observaciones"] = String("Lecturas validas: ") + String(lecturasValidas);
 
   String json;
   serializeJson(doc, json);
@@ -632,14 +711,21 @@ void actualizarTest() {
 // =======================================================
 void enviarJSON() {
   int bpmEnviar = obtenerBpmActual();
+  unsigned long elapsedSec = tiempoInicioTest > 0 ? (millis() - tiempoInicioTest) / 1000 : 0;
+  int restantes = (int)TEST_OBJETIVO_SEGUNDOS - (int)elapsedSec;
+  if (restantes < 0) restantes = 0;
 
   Serial.print("{");
   Serial.print("\"device_id\":\""); Serial.print(DEVICE_ID); Serial.print("\",");
   Serial.print("\"test_id\":\"");   Serial.print(testIdActual); Serial.print("\",");
+  Serial.print("\"estado_test\":\""); Serial.print(testFinalizado ? estadoFinalTest : "en_progreso"); Serial.print("\",");
   Serial.print("\"bpm\":");         Serial.print(bpmEnviar); Serial.print(",");
   Serial.print("\"spo2\":");        Serial.print(hayDedo ? (int)spo2 : 0); Serial.print(",");
   Serial.print("\"pasos\":");       Serial.print(contadorPasos); Serial.print(",");
   Serial.print("\"distancia_m\":");  Serial.print(distanciaAcumuladaCm / 100.0); Serial.print(",");
+  Serial.print("\"elapsed_s\":");    Serial.print(elapsedSec); Serial.print(",");
+  Serial.print("\"remaining_s\":");  Serial.print(restantes); Serial.print(",");
+  Serial.print("\"lecturas_validas\":"); Serial.print(lecturasValidas); Serial.print(",");
   Serial.print("\"ax\":");          Serial.print(accel_x, 3); Serial.print(",");
   Serial.print("\"gx\":");          Serial.print(gyro_x, 3); Serial.print(",");
   Serial.print("\"wifi\":");        Serial.print(WiFi.status() == WL_CONNECTED ? 1 : 0); Serial.print(",");
@@ -709,6 +795,12 @@ float calcularSpO2(uint32_t *red, uint32_t *ir, int length) {
 void pantallaMonitor() {
   display.clearDisplay();
 
+  unsigned long elapsedSec = tiempoInicioTest > 0 ? (millis() - tiempoInicioTest) / 1000 : 0;
+  int restantes = (int)TEST_OBJETIVO_SEGUNDOS - (int)elapsedSec;
+  if (restantes < 0) restantes = 0;
+  int minR = restantes / 60;
+  int segR = restantes % 60;
+
   display.setTextSize(1);
   display.setTextColor(SSD1306_WHITE);
   display.setCursor(0, 0);
@@ -746,8 +838,20 @@ void pantallaMonitor() {
   } else {
     display.print("WiFi: NO ");
   }
+
   display.print("T:");
-  display.print(testIdActual.length() > 0 ? "OK" : "NO");
+  if (testFinalizado) {
+    if (estadoFinalTest == "completada") {
+      display.print("DONE");
+    } else {
+      display.print("INT");
+    }
+  } else {
+    display.print(minR);
+    display.print(":");
+    if (segR < 10) display.print("0");
+    display.print(segR);
+  }
 
   display.display();
 }
