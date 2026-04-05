@@ -280,6 +280,7 @@ export class Database {
 
       test.lecturas = readings.map((row: any) => ({
         id: row.id,
+        tiempo: row.tiempo,
         frecuenciaCardiaca: row.frecuenciaCardiaca,
         spo2: row.spo2,
         pasos: row.pasos,

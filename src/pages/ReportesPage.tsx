@@ -27,7 +27,7 @@ const formatClock = (seconds: number) => {
 };
 
 const getRealtimeWsUrl = (testId: string) => {
-  const wsBase = process.env.REACT_APP_WS_URL || 'ws://localhost:3001';
+  const wsBase = ((globalThis as any)?.process?.env?.REACT_APP_WS_URL as string | undefined) || 'ws://localhost:3001';
   return `${wsBase}/ws/tests?testId=${encodeURIComponent(testId)}`;
 };
 
@@ -291,6 +291,7 @@ export const ReportesPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
   const [isWsConnected, setIsWsConnected] = useState(false);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const autoFinalizeRequestedRef = useRef<string | null>(null);
   const completionAlertShownRef = useRef<Set<string>>(new Set());
@@ -612,6 +613,33 @@ export const ReportesPage: React.FC = () => {
     };
   }, [currentTest, chartRange]);
 
+  const handleGeneratePdf = async () => {
+    if (!currentTest?.id) return;
+
+    try {
+      setIsGeneratingPdf(true);
+      const pdfBlob = await testService.generatePDF(currentTest.id);
+      const url = window.URL.createObjectURL(pdfBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `reporte-${currentTest.id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('❌ Error generando PDF:', error);
+      void Swal.fire({
+        icon: 'error',
+        title: 'No se pudo generar PDF',
+        text: 'Ocurrio un error al generar el reporte. Intenta de nuevo.',
+        confirmButtonColor: '#b91c1c',
+      });
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
+
   if (isLoading) {
     return <div className="max-w-6xl mx-auto px-4 py-8 text-gray-600">Cargando reporte...</div>;
   }
@@ -850,8 +878,8 @@ export const ReportesPage: React.FC = () => {
               <div className="flex items-center justify-between gap-3 flex-wrap">
                 <p className="text-sm font-medium text-slate-800">
                   {isWsConnected
-                    ? 'Tiempo real por WebSocket (sin polling)'
-                    : 'WebSocket no disponible. Usando polling de respaldo'}
+                    ? 'Tiempo real '
+                    : 'WebSocket no disponible.'}
                 </p>
                 <div className="flex items-center gap-2">
                   <button
@@ -970,9 +998,15 @@ export const ReportesPage: React.FC = () => {
             <Button variant="primary" className="!bg-slate-900 hover:!bg-slate-800">
               Guardar Reporte
             </Button>
-            <Button variant="secondary">
-              Descargar PDF
-            </Button>
+            {currentTest?.status === 'completada' && (
+              <Button
+                variant="secondary"
+                onClick={handleGeneratePdf}
+                disabled={isGeneratingPdf || !currentTest?.id}
+              >
+                {isGeneratingPdf ? 'Generando PDF...' : 'Generar PDF'}
+              </Button>
+            )}
             <Button variant="outline">
               Imprimir
             </Button>

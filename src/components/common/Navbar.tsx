@@ -37,14 +37,8 @@ export const Navbar: React.FC = () => {
     <nav className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/95 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <Link to="/nueva-prueba" className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-teal-600 to-cyan-700 text-white flex items-center justify-center shadow-sm">
-              <span className="text-sm font-bold">6</span>
-            </div>
-            <div className="leading-tight">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Panel Clinico</p>
-              <h1 className="text-lg sm:text-xl font-bold text-slate-900">Prueba 6MWT</h1>
-            </div>
+          <Link to="/nueva-prueba" className="flex items-center">
+            <h1 className="text-lg sm:text-xl font-bold text-slate-900">Panel Clinico</h1>
           </Link>
 
           <div className="hidden md:flex items-center gap-2 rounded-full border border-slate-200 bg-white p-1 shadow-sm">

@@ -1,5 +1,6 @@
 import express, { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
+import PDFDocument from 'pdfkit';
 import { db } from '../database';
 import { authMiddleware, AuthRequest } from '../middleware';
 import { Test, TestReading, Alert, CreateTestRequest } from '../types';
@@ -49,6 +50,134 @@ const resolveDeviceCurrentTest = async (): Promise<Test | null> => {
 
   currentActiveTestId = null;
   return null;
+};
+
+const buildMinuteSummary = (readings: TestReading[]) => {
+  const bucket = new Map<
+    number,
+    {
+      fcSum: number;
+      fcCount: number;
+      spo2Sum: number;
+      spo2Count: number;
+      distancia: number;
+    }
+  >();
+
+  for (const r of readings) {
+    const elapsedSec = typeof r.tiempo === 'number' ? r.tiempo : 0;
+    const minute = Math.floor(elapsedSec / 60);
+
+    if (!bucket.has(minute)) {
+      bucket.set(minute, { fcSum: 0, fcCount: 0, spo2Sum: 0, spo2Count: 0, distancia: 0 });
+    }
+
+    const row = bucket.get(minute)!;
+
+    if (typeof r.frecuenciaCardiaca === 'number' && r.frecuenciaCardiaca > 0) {
+      row.fcSum += r.frecuenciaCardiaca;
+      row.fcCount += 1;
+    }
+
+    if (typeof r.spo2 === 'number' && r.spo2 > 0) {
+      row.spo2Sum += r.spo2;
+      row.spo2Count += 1;
+    }
+
+    if (typeof r.distancia === 'number') {
+      row.distancia = Math.max(row.distancia, r.distancia);
+    }
+  }
+
+  return Array.from(bucket.entries())
+    .sort((a, b) => a[0] - b[0])
+    .map(([minute, row]) => ({
+      minute,
+      fcAvg: row.fcCount > 0 ? Math.round(row.fcSum / row.fcCount) : 0,
+      spo2Avg: row.spo2Count > 0 ? Math.round(row.spo2Sum / row.spo2Count) : 0,
+      distancia: row.distancia,
+    }));
+};
+
+const drawCard = (doc: PDFKit.PDFDocument, x: number, y: number, w: number, h: number, title: string, value: string) => {
+  doc.roundedRect(x, y, w, h, 8).fillAndStroke('#f8fafc', '#e2e8f0');
+  doc.fillColor('#64748b').fontSize(9).text(title, x + 10, y + 8, { width: w - 20 });
+  doc.fillColor('#0f172a').fontSize(14).text(value, x + 10, y + 24, { width: w - 20 });
+};
+
+const drawMinuteChart = (
+  doc: PDFKit.PDFDocument,
+  title: string,
+  points: Array<{ x: number; y: number }>,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  color: string,
+  yLabel: string
+) => {
+  doc.roundedRect(x, y, w, h, 8).fillAndStroke('#ffffff', '#e2e8f0');
+  doc.fillColor('#0f172a').fontSize(11).text(title, x + 10, y + 10);
+
+  const padLeft = 36;
+  const padRight = 14;
+  const padTop = 30;
+  const padBottom = 24;
+  const chartX = x + padLeft;
+  const chartY = y + padTop;
+  const chartW = w - padLeft - padRight;
+  const chartH = h - padTop - padBottom;
+
+  doc.moveTo(chartX, chartY + chartH).lineTo(chartX + chartW, chartY + chartH).strokeColor('#cbd5e1').stroke();
+  doc.moveTo(chartX, chartY).lineTo(chartX, chartY + chartH).strokeColor('#cbd5e1').stroke();
+
+  if (!points.length) {
+    doc.fillColor('#64748b').fontSize(9).text('Sin datos', chartX + 6, chartY + chartH / 2 - 6);
+    return;
+  }
+
+  const minX = Math.min(...points.map((p) => p.x));
+  const maxX = Math.max(...points.map((p) => p.x));
+  const minYRaw = Math.min(...points.map((p) => p.y));
+  const maxYRaw = Math.max(...points.map((p) => p.y));
+  const yPad = Math.max(1, Math.round((maxYRaw - minYRaw) * 0.1));
+  const minY = minYRaw - yPad;
+  const maxY = maxYRaw + yPad;
+
+  const toX = (v: number) => {
+    if (maxX === minX) return chartX + chartW / 2;
+    return chartX + ((v - minX) / (maxX - minX)) * chartW;
+  };
+
+  const toY = (v: number) => {
+    if (maxY === minY) return chartY + chartH / 2;
+    return chartY + chartH - ((v - minY) / (maxY - minY)) * chartH;
+  };
+
+  doc.strokeColor('#e2e8f0');
+  for (let i = 1; i <= 3; i += 1) {
+    const gy = chartY + (i * chartH) / 4;
+    doc.moveTo(chartX, gy).lineTo(chartX + chartW, gy).stroke();
+  }
+
+  doc.strokeColor(color).lineWidth(2);
+  points.forEach((p, idx) => {
+    const px = toX(p.x);
+    const py = toY(p.y);
+    if (idx === 0) doc.moveTo(px, py);
+    else doc.lineTo(px, py);
+  });
+  doc.stroke();
+
+  const last = points[points.length - 1];
+  const lx = toX(last.x);
+  const ly = toY(last.y);
+  doc.circle(lx, ly, 2.8).fillAndStroke(color, color);
+
+  doc.fillColor('#64748b').fontSize(8).text(`${Math.round(maxYRaw)} ${yLabel}`, x + 8, chartY - 2);
+  doc.text(`${Math.round(minYRaw)} ${yLabel}`, x + 8, chartY + chartH - 8);
+  doc.text(`min ${minX + 1}`, chartX, chartY + chartH + 8);
+  doc.text(`min ${maxX + 1}`, chartX + chartW - 28, chartY + chartH + 8);
 };
 
 router.post('/', async (req, res: Response) => {
@@ -275,6 +404,156 @@ router.post('/:id/alerts', async (req, res: Response) => {
     broadcastAlert(req.params.id, alert);
     res.status(201).json(alert);
   } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.get('/:id/report/pdf', async (req, res: Response) => {
+  try {
+    const test = await db.getTestById(req.params.id);
+
+    if (!test) {
+      res.status(404).json({ error: 'Test not found' });
+      return;
+    }
+
+    const minuteRows = buildMinuteSummary(test.lecturas);
+    const distanciaTotal =
+      test.distanciaTotal ||
+      (test.lecturas.length > 0 ? test.lecturas[test.lecturas.length - 1].distancia || 0 : 0);
+
+    const doc = new PDFDocument({ margin: 40, size: 'A4' });
+    const filename = `reporte-${test.id}.pdf`;
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    doc.pipe(res);
+
+    const headerY = 40;
+    doc.roundedRect(40, headerY, 515, 70, 10).fill('#1e3a8a');
+    doc.fillColor('#ffffff').fontSize(20).text('Reporte de Prueba de Caminata 6 Minutos', 56, headerY + 18);
+    doc.fontSize(10).fillColor('#dbeafe').text(`Generado: ${new Date().toLocaleString()}`, 56, headerY + 48);
+    doc.text(`ID Prueba: ${test.id}`, 350, headerY + 48, { width: 180, align: 'right' });
+
+    let y = 128;
+    doc.fillColor('#1e3a8a').fontSize(14).text('Datos del Paciente', 40, y);
+    y += 24;
+
+    doc.fontSize(10).fillColor('#0f172a');
+    const patientLines = [
+      ['Nombre', test.paciente.nombreCompleto || '-'],
+      ['ID Paciente', test.paciente.id || '-'],
+      ['Medico Responsable', test.medicoResponsable || '-'],
+      ['Edad', `${test.paciente.edad ?? '-'} anios`],
+      ['Sexo', test.paciente.sexo || '-'],
+      ['Raza', test.paciente.raza || '-'],
+      ['Altura', `${test.paciente.altura ?? '-'} cm`],
+      ['Peso', `${test.paciente.peso ?? '-'} kg`],
+      ['Presion Sanguinea Inicial', test.presionSanguineaInicial || '-'],
+      ['Oxigeno Suplementario', test.oxigenoSupplementario ? 'Si' : 'No'],
+      ['Escala de Borg', typeof test.escalaBorg === 'number' ? `${test.escalaBorg}/10` : '-'],
+    ];
+
+    patientLines.forEach(([label, value]) => {
+      doc.fillColor('#475569').text(`${label}:`, 44, y, { width: 170 });
+      doc.fillColor('#0f172a').text(String(value), 190, y, { width: 350 });
+      y += 18;
+    });
+
+    y += 8;
+    doc.fillColor('#1e3a8a').fontSize(14).text('Resultados de la Prueba', 40, y);
+    y += 22;
+
+    const fcValues = test.lecturas.map((r) => r.frecuenciaCardiaca).filter((v) => typeof v === 'number' && v > 0);
+    const spo2Values = test.lecturas.map((r) => r.spo2).filter((v) => typeof v === 'number' && v > 0);
+    const fcMin = fcValues.length ? Math.min(...fcValues) : 0;
+    const fcMax = fcValues.length ? Math.max(...fcValues) : 0;
+    const fcAvg = fcValues.length ? Math.round(fcValues.reduce((a, b) => a + b, 0) / fcValues.length) : 0;
+    const spo2Min = spo2Values.length ? Math.min(...spo2Values) : 0;
+    const spo2Avg = spo2Values.length ? Math.round(spo2Values.reduce((a, b) => a + b, 0) / spo2Values.length) : 0;
+
+    drawCard(doc, 40, y, 120, 58, 'Duracion', `${Math.floor((test.duracion || 0) / 60)} min ${(test.duracion || 0) % 60} s`);
+    drawCard(doc, 172, y, 120, 58, 'Distancia total', `${distanciaTotal || 0} m`);
+    drawCard(doc, 304, y, 120, 58, 'FC promedio', `${fcAvg} BPM`);
+    drawCard(doc, 436, y, 120, 58, 'SpO2 promedio', `${spo2Avg}%`);
+
+    y += 74;
+    drawCard(doc, 40, y, 120, 58, 'FC minima', `${fcMin} BPM`);
+    drawCard(doc, 172, y, 120, 58, 'FC maxima', `${fcMax} BPM`);
+    drawCard(doc, 304, y, 120, 58, 'SpO2 minima', `${spo2Min}%`);
+    drawCard(doc, 436, y, 120, 58, 'Pasos', `${test.lecturas.length ? Math.max(...test.lecturas.map((r) => r.pasos || 0)) : 0}`);
+
+    y += 86;
+    doc.fillColor('#1e3a8a').fontSize(14).text('Promedios por Minuto (BPM / SpO2 / Distancia)', 40, y);
+    y += 22;
+
+    const headers = ['Minuto', 'BPM prom', 'SpO2 prom', 'Distancia (m)'];
+    const colX = [48, 150, 260, 380];
+
+    if (y > 680) {
+      doc.addPage();
+      y = 48;
+    }
+
+    doc.fontSize(11).fillColor('#0f172a');
+    headers.forEach((h, i) => doc.text(h, colX[i], y));
+    y += 18;
+    doc.moveTo(48, y - 4).lineTo(545, y - 4).strokeColor('#cbd5e1').stroke();
+
+    if (minuteRows.length === 0) {
+      doc.fillColor('#64748b').text('Sin lecturas para resumir por minuto.', 48, y + 6);
+    } else {
+      for (const row of minuteRows) {
+        if (y > 760) {
+          doc.addPage();
+          y = 60;
+          doc.fontSize(11).fillColor('#0f172a');
+          headers.forEach((h, i) => doc.text(h, colX[i], y));
+          y += 18;
+          doc.moveTo(48, y - 4).lineTo(545, y - 4).strokeColor('#cbd5e1').stroke();
+        }
+
+        doc.fillColor('#1e293b');
+        doc.text(`${row.minute + 1}`, colX[0], y);
+        doc.text(`${row.fcAvg}`, colX[1], y);
+        doc.text(`${row.spo2Avg}`, colX[2], y);
+        doc.text(`${row.distancia}`, colX[3], y);
+        doc.moveTo(48, y + 14).lineTo(545, y + 14).strokeColor('#f1f5f9').stroke();
+        y += 16;
+      }
+    }
+
+    const fcPoints = minuteRows.map((r) => ({ x: r.minute, y: r.fcAvg }));
+    const spo2Points = minuteRows.map((r) => ({ x: r.minute, y: r.spo2Avg }));
+
+    doc.addPage();
+    doc.fillColor('#1e3a8a').fontSize(16).text('Graficas Finales del Test', 40, 44);
+    doc.fillColor('#64748b').fontSize(10).text('Curvas por minuto calculadas al concluir la prueba', 40, 64);
+
+    drawMinuteChart(doc, 'Frecuencia Cardiaca por Minuto', fcPoints, 40, 92, 515, 210, '#b91c1c', 'BPM');
+    drawMinuteChart(doc, 'SpO2 por Minuto', spo2Points, 40, 320, 515, 210, '#0369a1', '%');
+
+    // Bloque de validacion clinica sin logo
+    const footerTop = 560;
+    doc.strokeColor('#cbd5e1').lineWidth(1);
+    doc.moveTo(70, footerTop + 26).lineTo(260, footerTop + 26).stroke();
+    doc.moveTo(335, footerTop + 26).lineTo(525, footerTop + 26).stroke();
+
+    doc.fillColor('#475569').fontSize(9);
+    doc.text('Firma del profesional', 110, footerTop + 30);
+    doc.text('Firma del paciente', 385, footerTop + 30);
+
+    doc.fillColor('#64748b').fontSize(8);
+    doc.text(
+      `Documento clinico generado automaticamente por Panel Clinico · ${new Date().toLocaleString()}`,
+      40,
+      620,
+      { width: 515, align: 'center' }
+    );
+
+    doc.end();
+  } catch (error) {
+    console.error('❌ Error generating PDF report:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
