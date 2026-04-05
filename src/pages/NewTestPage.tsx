@@ -215,7 +215,7 @@ export const NewTestPage: React.FC = () => {
         peso: values.peso || undefined,
         raza: values.raza || undefined,
         sexo: values.sexo,
-        escalaBorg: values.escalaBorg,
+        escalaBorg: Number(values.escalaBorg),
         tipoCirugia: values.tipoCirugia,
         fechaOperacion: values.fechaCaminata,
         fechaCaminata: values.fechaCaminata,

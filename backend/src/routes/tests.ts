@@ -11,6 +11,7 @@ type PdfDoc = any;
 
 const router = express.Router();
 let currentActiveTestId: string | null = null;
+const TEST_TARGET_SECONDS = 360;
 
 const sanitizePatientId = (value: string | undefined) => {
   const clean = (value || '')
@@ -69,6 +70,9 @@ const buildMinuteSummary = (readings: TestReading[]) => {
 
   for (const r of readings) {
     const elapsedSec = typeof r.tiempo === 'number' ? r.tiempo : 0;
+    if (elapsedSec < 0 || elapsedSec >= TEST_TARGET_SECONDS) {
+      continue;
+    }
     const minute = Math.floor(elapsedSec / 60);
 
     if (!bucket.has(minute)) {
@@ -197,6 +201,11 @@ router.post('/', async (req, res: Response) => {
       observacionesPrevias,
     } = req.body as CreateTestRequest;
 
+    const borgParsed = Number(escalaBorg);
+    const escalaBorgNormalizada = Number.isFinite(borgParsed)
+      ? Math.max(0, Math.min(10, Math.round(borgParsed)))
+      : undefined;
+
     if (!paciente?.nombreCompleto || !paciente?.edad || !paciente?.altura) {
       res.status(400).json({ error: 'Datos de paciente incompletos' });
       return;
@@ -226,7 +235,7 @@ router.post('/', async (req, res: Response) => {
       numeroCaminata,
       fechaCaminata: normalizedFechaCaminata,
       enfermedadPulmonar,
-      escalaBorg: typeof escalaBorg === 'number' ? escalaBorg : undefined,
+      escalaBorg: escalaBorgNormalizada,
       presionSanguineaInicial,
       oxigenoSupplementario,
       estado: 'en_progreso',
@@ -543,8 +552,7 @@ router.get('/:id/report/pdf', async (req, res: Response) => {
     doc.moveTo(335, footerTop + 26).lineTo(525, footerTop + 26).stroke();
 
     doc.fillColor('#475569').fontSize(9);
-    doc.text('Firma del profesional', 110, footerTop + 30);
-    doc.text('Firma del paciente', 385, footerTop + 30);
+    doc.text(`Paciente: ${test.paciente.nombreCompleto || '-'}`, 360, footerTop + 30);
 
     doc.fillColor('#64748b').fontSize(8);
     doc.text(
