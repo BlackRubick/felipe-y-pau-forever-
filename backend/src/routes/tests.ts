@@ -1,10 +1,13 @@
 import express, { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import PDFDocument from 'pdfkit';
 import { db } from '../database';
 import { authMiddleware, AuthRequest } from '../middleware';
 import { Test, TestReading, Alert, CreateTestRequest } from '../types';
 import { broadcastAlert, broadcastReading } from '../realtime';
+
+// Use CommonJS require to avoid TS namespace/type-resolution issues on some setups.
+const PDFDocument = require('pdfkit');
+type PdfDoc = any;
 
 const router = express.Router();
 let currentActiveTestId: string | null = null;
@@ -99,14 +102,14 @@ const buildMinuteSummary = (readings: TestReading[]) => {
     }));
 };
 
-const drawCard = (doc: PDFKit.PDFDocument, x: number, y: number, w: number, h: number, title: string, value: string) => {
+const drawCard = (doc: PdfDoc, x: number, y: number, w: number, h: number, title: string, value: string) => {
   doc.roundedRect(x, y, w, h, 8).fillAndStroke('#f8fafc', '#e2e8f0');
   doc.fillColor('#64748b').fontSize(9).text(title, x + 10, y + 8, { width: w - 20 });
   doc.fillColor('#0f172a').fontSize(14).text(value, x + 10, y + 24, { width: w - 20 });
 };
 
 const drawMinuteChart = (
-  doc: PDFKit.PDFDocument,
+  doc: PdfDoc,
   title: string,
   points: Array<{ x: number; y: number }>,
   x: number,
