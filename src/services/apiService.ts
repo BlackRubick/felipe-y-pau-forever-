@@ -70,6 +70,11 @@ class ApiService {
         throw this.handleError(error);
       }
 
+      // Manejar respuestas sin body (como 204 No Content)
+      if (response.status === 204 || response.headers.get('content-length') === '0') {
+        return undefined as T;
+      }
+
       const result = await response.json();
 
       if (result && typeof result === 'object' && 'success' in result) {
